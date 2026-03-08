@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Palazone Admin</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#070A12;
+      --panel:#111520;
+      --border:rgba(255,255,255,.12);
+      --text:#EAF0FF;
+      --muted:rgba(234,240,255,.6);
+      --primary:#35F2FF;
+      --danger:#FB7185;
+      --success:#34d399;
+      --r:12px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Space Grotesk", sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      display:flex; flex-direction:column;
+      min-height:100vh;
+    }
+
+    .hidden{display:none !important}
+    .btn{
+      padding:10px 16px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      font-weight:600; cursor:pointer;
+      font-family:inherit;
+      transition:.2s;
+    }
+    .btn:hover{background:rgba(255,255,255,.1)}
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(53,242,255,.2), rgba(167,139,250,.2));
+      border-color:rgba(53,242,255,.3);
+      color:#fff;
+    }
+    .btn.danger{background:rgba(251,113,133,.15); color:var(--danger); border-color:var(--danger)}
+    
+    input, textarea, select{
+      width:100%;
+      background:rgba(0,0,0,.3);
+      border:1px solid var(--border);
+      padding:10px;
+      border-radius:8px;
+      color:white;
+      font-family:inherit;
+      outline:none;
+    }
+    input:focus{border-color:var(--primary)}
+
+    #login-view{
+      flex:1; display:flex; align-items:center; justify-content:center;
+      padding:20px;
+    }
+    .login-box{
+      width:100%; max-width:400px;
+      background:var(--panel);
+      padding:30px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      text-align:center;
+    }
+    .login-box h1{margin-top:0}
+    .login-box form{display:flex; flex-direction:column; gap:15px; margin-top:20px}
+
+    #admin-view{
+      max-width:1200px; margin:0 auto; width:100%; padding:20px;
+    }
+    
+    header{
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:30px; padding-bottom:20px;
+      border-bottom:1px solid var(--border);
+    }
+    .brand{font-size:1.5rem; font-weight:700; color:var(--primary)}
+
+    .toolbar{
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:20px;
+      gap:10px; flex-wrap:wrap;
+    }
+    
+    .items-list{
+      display:grid; gap:10px;
+    }
+    .item-row{
+      display:grid;
+      grid-template-columns: 60px 2fr 1fr 1fr 100px;
+      align-items:center;
+      background:var(--panel);
+      padding:10px;
+      border-radius:8px;
+      border:1px solid var(--border);
+      gap:15px;
+    }
+    @media(max-width:700px){
+      .item-row{grid-template-columns: 60px 1fr; gap:10px;}
+      .item-row > *:nth-child(3), .item-row > *:nth-child(4){display:none}
+    }
+
+    .item-img{width:48px; height:48px; object-fit:contain; background:#000; border-radius:6px}
+    .item-info b{display:block; font-size:1.05rem}
+    .item-info span{color:var(--muted); font-size:0.9rem}
+    .actions{display:flex; gap:8px; justify-content:flex-end}
+
+    .modal-overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.7);
+      backdrop-filter:blur(5px);
+      display:flex; align-items:center; justify-content:center;
+      z-index:100;
+    }
+    .modal{
+      background:#161b2c;
+      width:min(600px, 90vw);
+      max-height:90vh; overflow-y:auto;
+      padding:25px; border-radius:16px;
+      border:1px solid var(--border);
+      box-shadow:0 20px 50px rgba(0,0,0,.5);
+    }
+    .modal-title{margin-top:0; font-size:1.4rem}
+    .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:15px; margin:20px 0}
+    .full{grid-column:1/-1}
+    .label{display:block; margin-bottom:6px; font-size:0.9rem; color:var(--muted)}
+
+    .toast{
+      position:fixed; bottom:20px; right:20px;
+      background:var(--panel); border:1px solid var(--border);
+      padding:12px 20px; border-radius:8px;
+      box-shadow:0 10px 30px rgba(0,0,0,.5);
+      animation: slideIn .3s ease;
+      z-index: 999;
+    }
+    @keyframes slideIn{ from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1}}
+  </style>
+</head>
+<body>
+
+  <div id="login-view">
+    <div class="login-box">
+      <div class="brand">🔒 Admin Access</div>
+      <p> </p>
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Email admin" required>
+        <input type="password" id="password" placeholder="Mot de passe" required>
+        <button type="submit" class="btn primary">Se connecter</button>
+      </form>
+      <p id="loginError" style="color:var(--danger); display:none; margin-top:10px"></p>
+    </div>
+  </div>
+
+  <div id="admin-view" class="hidden">
+    <header>
+      <div class="brand">Palazone <span style="color:#fff; font-weight:400">Manager</span></div>
+      <button class="btn" id="logoutBtn">Déconnexion</button>
+    </header>
+
+    <div class="toolbar">
+      <h2 style="margin:0">Produits (<span id="count">0</span>)</h2>
+      <button class="btn primary" id="addBtn">+ Ajouter un produit</button>
+    </div>
+
+    <div class="items-list" id="list">
+      <div style="padding:40px; text-align:center; color:var(--muted)">Chargement...</div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 class="modal-title" id="modalTitle">Éditer produit</h3>
+      <form id="productForm">
+        <input type="hidden" id="inpId">
+        <div class="form-grid">
+          <div class="full">
+            <label class="label">Nom du produit</label>
+            <input type="text" id="inpName" required>
+          </div>
+          <div>
+            <label class="label">Catégorie</label>
+            <input type="text" id="inpCat" list="catList" required>
+            <datalist id="catList">
+              <option value="Outils"></option>
+              <option value="Armes"></option>
+              <option value="Ressources"></option>
+              <option value="Armures"></option>
+            </datalist>
+          </div>
+          <div>
+            <label class="label">Tag (Badge)</label>
+            <input type="text" id="inpTag">
+          </div>
+          <div class="full">
+            <label class="label">Description</label>
+            <textarea id="inpDesc" rows="2"></textarea>
+          </div>
+          <div>
+            <label class="label">Prix $</label>
+            <input type="number" id="inpPriceDollar" required min="0">
+          </div>
+          <div>
+            <label class="label">Prix PBS</label>
+            <input type="number" id="inpPricePBS" required min="0">
+          </div>
+          <div class="full">
+            <label class="label">Image URL</label>
+            <input type="url" id="inpImg">
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px">
+          <button type="button" class="btn" id="closeModal">Annuler</button>
+          <button type="submit" class="btn primary">Sauvegarder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    /**
+     * ✅ Firebase config dans le code (OK)
+     * Remplace par les VRAIES valeurs de ton projet Firebase.
+     */
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_wo3eyil5Nr8-FaogEGWthscJ3SeBmu8",
+    authDomain: "palazone.firebaseapp.com",
+    projectId: "palazone",
+    storageBucket: "palazone.firebasestorage.app",
+    messagingSenderId: "519974328064",
+    appId: "1:519974328064:web:20f77d9932b401aa8a45e5"
+    };
+
+    /**
+     * 🔒 JSONBin : PLUS AUCUNE CLE ICI
+     * On passe par /api/jsonbin (route Vercel) qui utilise:
+     * - process.env.JSONBIN_BIN_ID
+     * - process.env.JSONBIN_MASTER_KEY
+     */
+
+    // Initialisation Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    let items = [];
+    let isEditMode = false;
+
+    const loginView = document.getElementById("login-view");
+    const adminView = document.getElementById("admin-view");
+    const listEl = document.getElementById("list");
+    const modal = document.getElementById("modal");
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loginView.classList.add("hidden");
+        adminView.classList.remove("hidden");
+        loadData();
+      } else {
+        loginView.classList.remove("hidden");
+        adminView.classList.add("hidden");
+      }
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (error) {
+        document.getElementById("loginError").textContent = "Identifiants invalides ou erreur de config.";
+        document.getElementById("loginError").style.display = "block";
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+
+    async function loadData() {
+      showToast("Chargement des produits...");
+      try {
+        const res = await fetch("/api/jsonbin", { method: "GET" });
+        if (!res.ok) throw new Error("Réponse API invalide");
+        const data = await res.json();
+
+        items = data.record?.items || [];
+        render();
+        showToast("Données chargées !", "success");
+      } catch (e) {
+        console.error(e);
+        showToast("Erreur lors du chargement", "err");
+      }
+    }
+
+    async function saveData() {
+      showToast("Enregistrement...");
+      try {
+        const res = await fetch("/api/jsonbin", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items })
+        });
+
+        if (!res.ok) throw new Error("Impossible de sauvegarder via l'API");
+        showToast("Boutique mise à jour !", "success");
+      } catch (e) {
+        console.error(e);
+        showToast("Erreur sauvegarde", "err");
+        alert("Échec de la sauvegarde : " + e.message);
+      }
+    }
+
+    function render() {
+      document.getElementById("count").textContent = items.length;
+
+      if (items.length === 0) {
+        listEl.innerHTML = '<div style="padding:40px; text-align:center; color:var(--muted)">La liste est vide.</div>';
+        return;
+      }
+
+      listEl.innerHTML = items.map(item => `
+        <div class="item-row">
+          <img src="${item.img || ''}" class="item-img"
+               onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzIyMiIvPjwvc3ZnPg=='">
+          <div class="item-info">
+            <b>${escapeHtml(item.name || "")}</b>
+            <span>${escapeHtml(item.tag || 'Sans tag')}</span>
+          </div>
+          <div class="item-info"><span>${escapeHtml(item.cat || "")}</span></div>
+          <div class="item-info">
+            <div style="color:var(--success)">$ ${Number(item.prices?.["$"] || 0)}</div>
+            <div style="color:var(--primary)">PBS ${Number(item.prices?.["PBS"] || 0)}</div>
+          </div>
+          <div class="actions">
+            <button class="btn" onclick="editItem('${String(item.id)}')">✏️</button>
+            <button class="btn danger" onclick="deleteItem('${String(item.id)}')">🗑️</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // Expose pour les onclick inline
+    window.deleteItem = async (id) => {
+      if(!confirm("Supprimer définitivement ce produit ?")) return;
+      items = items.filter(i => i.id !== id);
+      render();
+      await saveData();
+    };
+
+    window.editItem = (id) => {
+      const item = items.find(i => i.id === id);
+      if(!item) return;
+      fillForm(item);
+      isEditMode = true;
+      document.getElementById("modalTitle").textContent = "Modifier le produit";
+      modal.classList.remove("hidden");
+    };
+
+    document.getElementById("addBtn").addEventListener("click", () => {
+      fillForm({});
+      isEditMode = false;
+      document.getElementById("modalTitle").textContent = "Ajouter un produit";
+      document.getElementById("inpId").value = "item_" + Date.now();
+      modal.classList.remove("hidden");
+    });
+
+    document.getElementById("productForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const newItem = {
+        id: document.getElementById("inpId").value,
+        name: document.getElementById("inpName").value,
+        cat: document.getElementById("inpCat").value,
+        tag: document.getElementById("inpTag").value,
+        desc: document.getElementById("inpDesc").value,
+        img: document.getElementById("inpImg").value,
+        prices: {
+          "$": Number(document.getElementById("inpPriceDollar").value),
+          "PBS": Number(document.getElementById("inpPricePBS").value)
+        }
+      };
+
+      if(isEditMode) {
+        const idx = items.findIndex(i => i.id === newItem.id);
+        if(idx !== -1) items[idx] = newItem;
+      } else {
+        items.push(newItem);
+      }
+
+      modal.classList.add("hidden");
+      render();
+      await saveData();
+    });
+
+    document.getElementById("closeModal").addEventListener("click", () => modal.classList.add("hidden"));
+
+    function fillForm(d) {
+      document.getElementById("inpId").value = d.id || "";
+      document.getElementById("inpName").value = d.name || "";
+      document.getElementById("inpCat").value = d.cat || "";
+      document.getElementById("inpTag").value = d.tag || "";
+      document.getElementById("inpDesc").value = d.desc || "";
+      document.getElementById("inpImg").value = d.img || "";
+      document.getElementById("inpPriceDollar").value = d.prices?.["$"] || 0;
+      document.getElementById("inpPricePBS").value = d.prices?.["PBS"] || 0;
+    }
+
+    function showToast(msg, type="info") {
+      const el = document.createElement("div");
+      el.className = "toast";
+      el.textContent = msg;
+      if(type==="success") el.style.borderLeft = "4px solid var(--success)";
+      if(type==="err") el.style.borderLeft = "4px solid var(--danger)";
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), 3000);
+    }
+
+    // Petit helper pour éviter de casser le HTML si un champ contient < > etc.
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
+</body>
+</html>
