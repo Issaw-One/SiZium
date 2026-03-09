@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/create-ticket",
+      "destination": "http://82.26.157.108:25646/api/create-ticket"
+    }
+  ]
+}
