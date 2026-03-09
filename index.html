@@ -424,7 +424,7 @@ async function loadItemsFromJsonBin() {
 
     showMsg("⏳ Création du ticket Discord...", "muted");
 
-    const res = await fetch("https://82.26.157.108:25646/api/create-ticket", {
+    const res = await fetch("82.26.157.108:25646/api/create-ticket", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
