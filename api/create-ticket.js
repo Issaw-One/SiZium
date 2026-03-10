@@ -41,9 +41,23 @@ export default async function handler(req, res) {
       return res.status(405).json({ ok: false, error: "Method Not Allowed" });
     }
 
-    const { username, note = "", items, totals } = req.body || {};
+    const {
+      username,
+      pseudo,
+      discordPseudo,
+      note = "",
+      items,
+      totals,
+      totalDollar,
+      totalPBS
+    } = req.body || {};
 
-    if (!username || !Array.isArray(items) || items.length === 0 || !totals) {
+    // Accepte "username" ou "pseudo" (compatibilité front)
+    const displayName = username || pseudo || discordPseudo;
+    // Accepte "totals" ou les champs séparés totalDollar/totalPBS
+    const resolvedTotals = totals || { dollar: totalDollar ?? 0, pbs: totalPBS ?? 0 };
+
+    if (!displayName || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ ok: false, error: "Données invalides" });
     }
 
@@ -84,7 +98,7 @@ export default async function handler(req, res) {
     }
 
     const channel = await guild.channels.create({
-      name: `ticket-${safeChannelName(username)}`,
+      name: `ticket-${safeChannelName(displayName)}`,
       type: ChannelType.GuildText,
       parent: process.env.DISCORD_CATEGORY_ID,
       permissionOverwrites: [
@@ -114,18 +128,18 @@ export default async function handler(req, res) {
       })
       .join("\n");
 
-    const totalDollar = totals?.dollar ?? 0;
-    const totalPBS = totals?.pbs ?? 0;
+    const totalDollarVal = resolvedTotals?.dollar ?? 0;
+    const totalPBSVal = resolvedTotals?.pbs ?? 0;
 
     await channel.send({
       content:
 `🧾 **NOUVEAU TICKET**
-👤 **Pseudo :** ${username}
+👤 **Pseudo :** ${displayName}
 
 ${lines}
 
-💰 **Total $ :** ${totalDollar}
-🪙 **Total PBS :** ${totalPBS}
+💰 **Total $ :** ${totalDollarVal}
+🪙 **Total PBS :** ${totalPBSVal}
 
 📝 **Note :**
 ${note || "Aucune"}`
