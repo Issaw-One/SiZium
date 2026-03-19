@@ -153,6 +153,21 @@
     .full{grid-column:1/-1}
     .label{display:block; margin-bottom:6px; font-size:0.9rem; color:var(--muted)}
 
+    .item-row.is-hidden{
+      opacity:.45;
+      border-color:rgba(251,113,133,.3);
+    }
+    .item-row.is-hidden .item-info b::after{
+      content:" 🔒";
+      font-size:.8rem;
+    }
+    .btn.toggle-vis{
+      font-size:1rem;
+      padding:10px 12px;
+    }
+    .btn.toggle-vis.visible{ color:var(--success); border-color:var(--success) }
+    .btn.toggle-vis.hidden-state{ color:var(--danger); border-color:var(--danger) }
+
     .toast{
       position:fixed; bottom:20px; right:20px;
       background:var(--panel); border:1px solid var(--border);
@@ -205,8 +220,8 @@
     </div>
     <div style="font-size: 0.95rem; color: var(--text); line-height: 1.5;">
       Merci à tous les administrateurs de m’envoyer un e-mail à l’adresse suivante&nbsp;:
-      <a href="mailto:mathis@flixium.site" style="color: var(--primary); font-weight: 600; text-decoration: none; margin-left: 4px;">
-        mathis@flixium.site
+      <a href="/cdn-cgi/l/email-protection#771a16031f1e0437111b1e0f1e021a59041e0312" style="color: var(--primary); font-weight: 600; text-decoration: none; margin-left: 4px;">
+        <span class="__cf_email__" data-cfemail="f895998c90918bb89e949180918d95d68b918c9d">[email&#160;protected]</span>
       </a>
     </div>
   </div>
@@ -261,6 +276,13 @@
             <label class="label">Image URL</label>
             <input type="url" id="inpImg">
           </div>
+          <div class="full" style="display:flex; align-items:center; gap:12px; background:rgba(251,113,133,.07); border:1px solid rgba(251,113,133,.2); border-radius:8px; padding:12px 16px;">
+            <input type="checkbox" id="inpHidden" style="width:18px; height:18px; accent-color:var(--danger); cursor:pointer; flex-shrink:0;">
+            <div>
+              <label for="inpHidden" class="label" style="margin:0; cursor:pointer; color:var(--text); font-size:1rem;">🔒 Masquer aux acheteurs</label>
+              <div style="font-size:0.8rem; color:var(--muted); margin-top:2px;">Le produit sera invisible sur la boutique, mais visible ici pour vous.</div>
+            </div>
+          </div>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px">
           <button type="button" class="btn" id="closeModal">Annuler</button>
@@ -270,7 +292,7 @@
     </div>
   </div>
 
-  <script type="module">
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     // Ajout de sendPasswordResetEmail dans l'import
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -389,7 +411,10 @@
     }
 
     function render() {
-      document.getElementById("count").textContent = items.length;
+      const hiddenCount = items.filter(i => i.hidden).length;
+      document.getElementById("count").textContent = hiddenCount > 0
+        ? `${items.length} (${hiddenCount} masqué${hiddenCount>1?"s":""})`
+        : items.length;
 
       if (items.length === 0) {
         listEl.innerHTML = '<div style="padding:40px; text-align:center; color:var(--muted)">La liste est vide.</div>';
@@ -397,7 +422,7 @@
       }
 
       listEl.innerHTML = items.map(item => `
-        <div class="item-row">
+        <div class="item-row${item.hidden ? ' is-hidden' : ''}">
           <img src="${item.img || ''}" class="item-img"
                onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzIyMiIvPjwvc3ZnPg=='">
           <div class="item-info">
@@ -410,6 +435,7 @@
             <div style="color:var(--primary)">PBS ${Number(item.prices?.["PBS"] || 0)}</div>
           </div>
           <div class="actions">
+            <button class="btn toggle-vis ${item.hidden ? 'hidden-state' : 'visible'}" title="${item.hidden ? 'Rendre visible' : 'Masquer aux acheteurs'}" onclick="toggleVisibility('${String(item.id)}')">${item.hidden ? '🔒' : '👁️'}</button>
             <button class="btn" onclick="editItem('${String(item.id)}')">✏️</button>
             <button class="btn danger" onclick="deleteItem('${String(item.id)}')">🗑️</button>
           </div>
@@ -418,6 +444,15 @@
     }
 
     // Expose pour les onclick inline
+    window.toggleVisibility = async (id) => {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.hidden = !item.hidden;
+      render();
+      await saveData();
+      showToast(item.hidden ? "Produit masqué aux acheteurs 🔒" : "Produit visible par les acheteurs 👁️", item.hidden ? "err" : "success");
+    };
+
     window.deleteItem = async (id) => {
       if(!confirm("Supprimer définitivement ce produit ?")) return;
       items = items.filter(i => i.id !== id);
@@ -452,6 +487,7 @@
         tag: document.getElementById("inpTag").value,
         desc: document.getElementById("inpDesc").value,
         img: document.getElementById("inpImg").value,
+        hidden: document.getElementById("inpHidden").checked,
         prices: {
           "$": Number(document.getElementById("inpPriceDollar").value),
           "PBS": Number(document.getElementById("inpPricePBS").value)
@@ -479,6 +515,7 @@
       document.getElementById("inpTag").value = d.tag || "";
       document.getElementById("inpDesc").value = d.desc || "";
       document.getElementById("inpImg").value = d.img || "";
+      document.getElementById("inpHidden").checked = d.hidden || false;
       document.getElementById("inpPriceDollar").value = d.prices?.["$"] || 0;
       document.getElementById("inpPricePBS").value = d.prices?.["PBS"] || 0;
     }
@@ -494,14 +531,4 @@
     }
 
     // Petit helper pour éviter de casser le HTML si un champ contient < > etc.
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-  </script>
-</body>
-</html>
+    function escap
