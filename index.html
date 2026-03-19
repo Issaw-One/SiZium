@@ -151,7 +151,7 @@ async function loadItemsFromJsonBin() {
     throw new Error("Format JSON invalide : attendu { items: [...] }");
   }
 
-  ITEMS = record.items;
+  ITEMS = record.items.filter(item => item.hidden !== true);
 }
 
 
