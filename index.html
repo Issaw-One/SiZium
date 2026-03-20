@@ -77,9 +77,9 @@
 
       <div class="field">
         <div class="label">Prix</div>
-        <div class="rangeRow small"><span id="minLabel">0</span><span id="maxLabel">5000</span></div>
-        <input type="range" id="min" min="0" max="5000" value="0" />
-        <input type="range" id="max" min="0" max="5000" value="5000" />
+        <div class="rangeRow small"><span id="minLabel">0</span><span id="maxLabel">50000</span></div>
+        <input type="range" id="min" min="0" max="50000" value="0" />
+        <input type="range" id="max" min="0" max="50000" value="50000" />
       </div>
     </aside>
 
@@ -200,9 +200,10 @@ function renderProducts() {
   const { q, min, max, cat } = getFilters();
 
   const filtered = ITEMS.filter(it => {
-    if (!q || !(it.name.toLowerCase().includes(q) || it.desc.toLowerCase().includes(q)))
-      if (q) return false;
+    if (q && !(it.name.toLowerCase().includes(q) || (it.desc||"").toLowerCase().includes(q))) return false;
     if (cat !== "Tous" && it.cat !== cat) return false;
+    const hasAny = hasUnite(it) || hasDC(it);
+    if (!hasAny) return true;
     const matchPrice =
       (hasUnite(it) && priceUnite(it) >= min && priceUnite(it) <= max) ||
       (hasDC(it)    && priceDC(it)    >= min && priceDC(it)    <= max);
@@ -429,8 +430,8 @@ $("orderBtn").addEventListener("click", openCart);
 $("send").addEventListener("click", sendOrder);
 $("toTop").addEventListener("click", ()=>window.scrollTo({top:0,behavior:"smooth"}));
 $("reset").addEventListener("click", ()=>{
-  qEl.value=""; minEl.value=0; maxEl.value=5000;
-  activeCat="Tous"; minLabel.textContent="0"; maxLabel.textContent="5000";
+  qEl.value=""; minEl.value=0; maxEl.value=50000;
+  activeCat="Tous"; minLabel.textContent="0"; maxLabel.textContent="50000";
   renderCats(); renderProducts();
 });
 minEl.addEventListener("input", ()=>{
