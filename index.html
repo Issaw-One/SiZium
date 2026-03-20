@@ -11,7 +11,40 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
-  
+
+  <style>
+    /* Toggle DC / Unité */
+    .modeToggle {
+      display: flex;
+      background: rgba(0,0,0,.3);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+    }
+    .modeToggle button {
+      flex: 1;
+      padding: 6px 8px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,.5);
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+      font-size: 0.8rem;
+      line-height: 1.3;
+    }
+    .modeToggle button.active {
+      background: rgba(255,255,255,.14);
+      color: #fff;
+    }
+    .modeToggle button:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 
 <body>
@@ -27,23 +60,6 @@
       </div>
     </div>
   </div>
-
-  <!--<section class="hero">-->
-    <!--<div class="heroCard">
-      <div class="gridLines"></div>
-      <div class="heroTop">-->
-        <!--<div>
-          <h1 class="title">Boutique in-game, livraison rapide</h1>
-          <p class="subtitle">Choisis tes items, sélectionne la quantité, et ouvre un ticket Discord automatiquement.</p>
-        </div>
-        <div class="badges">
-          <div class="badge">⚡ Ticket auto</div>
-          <div class="badge">🛡️ Staff vérifie</div>
-          <div class="badge">🎮 Paiement in-game</div>
-        </div>-->
-      <!--</div>
-    </div>
-  </section>-->
 
   <section class="main">
     <aside class="panel side">
@@ -64,7 +80,6 @@
         <div class="rangeRow small"><span id="minLabel">0</span><span id="maxLabel">5000</span></div>
         <input type="range" id="min" min="0" max="5000" value="0" />
         <input type="range" id="max" min="0" max="5000" value="5000" />
-        <!--<div class="small muted" style="margin-top:6px">Filtre sur la valeur (quel que soit $/PBS)</div>-->
       </div>
     </aside>
 
@@ -110,7 +125,6 @@
 
       <div class="totalsBox">
         <div><b>Total $ :</b> <span id="totalDollar">0</span></div>
-        <!--<div><b>Total PBS :</b> <span id="totalPBS">0</span></div>-->
       </div>
 
       <div id="msg" class="small" style="margin-top:10px"></div>
@@ -123,387 +137,322 @@
   </div>
 
 <script>
-  // ✅ Chaque item a 2 prix : $ ET PBS
-  // ✅ JSONBin
 const BIN_ID = "6941efa5ae596e708f9f0079";
-const ACCESS_KEY = "$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"; // si bin privé (recommandé)
+const ACCESS_KEY = "$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK";
 
-let ITEMS = []; // remplacera l'ancien const ITEMS = [...]
+let ITEMS = [];
 
 async function loadItemsFromJsonBin() {
   const url = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
-
   const res = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      // si bin privé:
-      "X-Access-Key": ACCESS_KEY
-    }
+    headers: { "Content-Type": "application/json", "X-Access-Key": ACCESS_KEY }
   });
-
   if (!res.ok) throw new Error("JSONBin error: " + res.status);
-
   const data = await res.json();
-  // JSONBin v3 renvoie généralement le JSON dans data.record
   const record = data.record;
-
-  if (!record || !Array.isArray(record.items)) {
+  if (!record || !Array.isArray(record.items))
     throw new Error("Format JSON invalide : attendu { items: [...] }");
-  }
-
   ITEMS = record.items.filter(item => item.hidden !== true);
 }
 
+// Panier: key = `${id}|${mode}` (mode = "unite" | "dc")
+const cart = new Map();
+// Mode sélectionné par carte
+const selectedMode = {};
 
-  // Panier: clé = `${id}|${mode}` pour gérer le même item en $ et PBS séparément
-  const cart = new Map(); // key -> {id, name, mode, unitPrice, qty}
+let activeCat = "Tous";
 
-  // state
-  let activeCat = "Tous";
+const $ = id => document.getElementById(id);
+const grid = $("grid"), empty = $("empty"), shownEl = $("shown");
+const itemsCountEl = $("itemsCount"), catsEl = $("cats");
+const qEl = $("q"), minEl = $("min"), maxEl = $("max");
+const minLabel = $("minLabel"), maxLabel = $("maxLabel");
+const overlay = $("overlay"), drawer = $("drawer");
+const cartLines = $("cartLines"), totalDollarEl = $("totalDollar"), msgEl = $("msg");
 
-  // els
-  const $ = (id)=>document.getElementById(id);
-  const grid = $("grid");
-  const empty = $("empty");
-  const shownEl = $("shown");
-  const itemsCountEl = $("itemsCount");
+function openCart()  { overlay.style.display="block";  drawer.style.transform="translateX(0)";   renderCart(); }
+function closeCart() { overlay.style.display="none";   drawer.style.transform="translateX(100%)"; }
 
-  const catsEl = $("cats");
-  const qEl = $("q");
-  const minEl = $("min");
-  const maxEl = $("max");
-  const minLabel = $("minLabel");
-  const maxLabel = $("maxLabel");
+// Helpers item
+function hasDC(it)    { return it.dcEnabled !== false    && it.prices?.["dc"] !== undefined; }
+function hasUnite(it) { return it.uniteEnabled !== false && it.prices?.["$"]  !== undefined; }
+function priceDC(it)    { return it.prices?.["dc"] ?? 0; }
+function priceUnite(it) { return it.prices?.["$"]  ?? 0; }
+function labelDC(it)    { return it.dcLabel    || "DC"; }
+function labelUnite(it) { return it.uniteLabel || "Unité"; }
 
-  const overlay = $("overlay");
-  const drawer = $("drawer");
-  const cartLines = $("cartLines");
-  const totalDollarEl = $("totalDollar");
-  const msgEl = $("msg");
+function uniqCats() { return ["Tous", ...new Set(ITEMS.map(i=>i.cat))]; }
 
-  function openCart(){
-    overlay.style.display="block";
-    drawer.style.transform="translateX(0)";
-    renderCart();
-  }
-  function closeCart(){
-    overlay.style.display="none";
-    drawer.style.transform="translateX(100%)";
-  }
+function renderCats() {
+  catsEl.innerHTML = uniqCats().map(c =>
+    `<div class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</div>`
+  ).join("");
+  catsEl.querySelectorAll(".chip").forEach(ch => {
+    ch.addEventListener("click", () => { activeCat=ch.dataset.cat; renderCats(); renderProducts(); });
+  });
+}
 
-  function uniqCats(){
-    return ["Tous", ...new Set(ITEMS.map(i=>i.cat))];
-  }
+function getFilters() {
+  return { q: qEl.value.trim().toLowerCase(), min: +minEl.value, max: +maxEl.value, cat: activeCat };
+}
 
-  function renderCats(){
-    catsEl.innerHTML = uniqCats().map(c => `
-      <div class="chip ${c===activeCat ? "active":""}" data-cat="${c}">${c}</div>
-    `).join("");
-    catsEl.querySelectorAll(".chip").forEach(ch=>{
-      ch.addEventListener("click", ()=>{
-        activeCat = ch.dataset.cat;
-        renderCats();
-        renderProducts();
-      });
-    });
-  }
+function renderProducts() {
+  const { q, min, max, cat } = getFilters();
 
-  function getFilters(){
-    const q = qEl.value.trim().toLowerCase();
-    const min = Number(minEl.value);
-    const max = Number(maxEl.value);
-    return { q, min, max, cat: activeCat };
-  }
+  const filtered = ITEMS.filter(it => {
+    if (!q || !(it.name.toLowerCase().includes(q) || it.desc.toLowerCase().includes(q)))
+      if (q) return false;
+    if (cat !== "Tous" && it.cat !== cat) return false;
+    const matchPrice =
+      (hasUnite(it) && priceUnite(it) >= min && priceUnite(it) <= max) ||
+      (hasDC(it)    && priceDC(it)    >= min && priceDC(it)    <= max);
+    return matchPrice;
+  });
 
-  function renderProducts(){
-    const { q, min, max, cat } = getFilters();
+  shownEl.textContent = filtered.length;
+  if (!filtered.length) { grid.innerHTML=""; empty.style.display="block"; return; }
+  empty.style.display = "none";
 
-    const filtered = ITEMS.filter(it=>{
-      const matchQ = !q || (it.name.toLowerCase().includes(q) || it.desc.toLowerCase().includes(q));
-      const matchCat = (cat==="Tous") || it.cat===cat;
+  grid.innerHTML = filtered.map(it => {
+    // Mode par défaut
+    if (!selectedMode[it.id]) selectedMode[it.id] = hasUnite(it) ? "unite" : "dc";
+    const mode = selectedMode[it.id];
+    const curPrice = mode==="dc" ? priceDC(it) : priceUnite(it);
+    const bothAvail = hasDC(it) && hasUnite(it);
 
-      // filtre prix: on garde l'item si AU MOINS un des deux prix est dans la range
-      const p$ = it.prices["$"];
-      const pPBS = it.prices["PBS"];
-      const matchPrice = (p$>=min && p$<=max) || (pPBS>=min && pPBS<=max);
-
-      return matchQ && matchCat && matchPrice;
-    });
-
-    shownEl.textContent = filtered.length;
-
-    if(filtered.length===0){
-      grid.innerHTML="";
-      empty.style.display="block";
-      return;
-    }
-    empty.style.display="none";
-
-    grid.innerHTML = filtered.map(it=>{
-      // défaut: PBS sélectionné
-      const defaultMode = "$";
-      const defaultPrice = it.prices[defaultMode];
-
-      return `
-      <div class="card">
-        <div class="cardInner">
-
-          <div class="thumb">
-            ${
-              it.img
-                ? `<img src="${it.img}" alt="${it.name}"
-                      onerror="this.outerHTML='<div class=\\'fallback\\'>Image manquante</div>'">`
-                : `<div class="fallback">Aucune image</div>`
-            }
-          </div>
-
-          <div class="cardTop">
-            <div class="name">${it.name}</div>
-            <div class="tag">${it.tag}</div>
-          </div>
-
-          <div class="desc">${it.desc}</div>
-
-          <div class="modeRow">
-            <div class="qtyPicker">
-              <button type="button" class="qtyBtn" data-qdec="${it.id}">−</button>
-              <input class="qtyInput" type="number" min="1" step="1" value="1" data-qty="${it.id}">
-              <button type="button" class="qtyBtn" data-qinc="${it.id}">+</button>
-            </div>
-            <div class="pricePreview" id="price-${it.id}">${defaultPrice} ${defaultMode}</div>
-          </div>
-
-          <button class="add" data-add="${it.id}">+ Ajouter au panier</button>
-
+    return `
+    <div class="card">
+      <div class="cardInner">
+        <div class="thumb">
+          ${it.img
+            ? `<img src="${it.img}" alt="${it.name}" onerror="this.outerHTML='<div class=\\'fallback\\'>Image manquante</div>'">`
+            : `<div class="fallback">Aucune image</div>`}
         </div>
-      </div>`;
-    }).join("");
+        <div class="cardTop">
+          <div class="name">${it.name}</div>
+          <div class="tag">${it.tag}</div>
+        </div>
+        <div class="desc">${it.desc}</div>
 
-    // quantité + aperçu du total (mode fixe : $)
-    grid.querySelectorAll("[data-qty]").forEach(inp=>{
-      const id = inp.getAttribute("data-qty");
+        ${/* Affiche le toggle seulement si au moins un mode dispo */ (hasDC(it) || hasUnite(it)) ? `
+        <div class="modeToggle">
+          <button type="button"
+            class="${mode==='unite'?'active':''}"
+            ${!hasUnite(it)?'disabled':''}
+            data-mode-btn="${it.id}" data-mode="unite">
+            📦 ${labelUnite(it)}
+          </button>
+          <button type="button"
+            class="${mode==='dc'?'active':''}"
+            ${!hasDC(it)?'disabled':''}
+            data-mode-btn="${it.id}" data-mode="dc">
+            🗄️ ${labelDC(it)}
+          </button>
+        </div>` : ''}
+
+        <div class="modeRow">
+          <div class="qtyPicker">
+            <button type="button" class="qtyBtn" data-qdec="${it.id}">−</button>
+            <input class="qtyInput" type="number" min="1" step="1" value="1" data-qty="${it.id}">
+            <button type="button" class="qtyBtn" data-qinc="${it.id}">+</button>
+          </div>
+          <div class="pricePreview" id="price-${it.id}">${curPrice} $</div>
+        </div>
+
+        <button class="add" data-add="${it.id}">+ Ajouter au panier</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  // Toggle mode
+  grid.querySelectorAll("[data-mode-btn]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-mode-btn");
+      const newMode = btn.getAttribute("data-mode");
       const it = ITEMS.find(x=>x.id===id);
-      const mode = "$";
-      const unit = it.prices[mode];
+      selectedMode[id] = newMode;
 
-      const sync = ()=>{
-        let v = Math.floor(Number(inp.value) || 1);
-        if(v < 1) v = 1;
-        inp.value = v;
-        $("price-"+id).textContent = `${unit * v} ${mode}`;
-      };
+      grid.querySelectorAll(`[data-mode-btn="${id}"]`).forEach(b =>
+        b.classList.toggle("active", b.getAttribute("data-mode")===newMode)
+      );
 
-      sync();
-      inp.addEventListener("input", sync);
-      inp.addEventListener("change", sync);
+      const qty = Math.max(1, +grid.querySelector(`[data-qty="${id}"]`)?.value || 1);
+      const price = newMode==="dc" ? priceDC(it) : priceUnite(it);
+      const el = $("price-"+id);
+      if (el) el.textContent = `${price*qty} $`;
     });
+  });
 
-    grid.querySelectorAll("[data-qinc]").forEach(b=>{
-      b.addEventListener("click", ()=>{
-        const id = b.getAttribute("data-qinc");
-        const inp = grid.querySelector(`[data-qty="${id}"]`);
-        inp.value = String((Number(inp.value)||1) + 1);
-        inp.dispatchEvent(new Event("change"));
-      });
+  // Quantité
+  grid.querySelectorAll("[data-qty]").forEach(inp => {
+    const id = inp.getAttribute("data-qty");
+    const it = ITEMS.find(x=>x.id===id);
+    const sync = () => {
+      let v = Math.max(1, Math.floor(+inp.value||1));
+      inp.value = v;
+      const mode = selectedMode[id] || "unite";
+      const price = mode==="dc" ? priceDC(it) : priceUnite(it);
+      $("price-"+id).textContent = `${price*v} $`;
+    };
+    sync();
+    inp.addEventListener("input", sync);
+    inp.addEventListener("change", sync);
+  });
+
+  grid.querySelectorAll("[data-qinc]").forEach(b => {
+    b.addEventListener("click", () => {
+      const id = b.getAttribute("data-qinc");
+      const inp = grid.querySelector(`[data-qty="${id}"]`);
+      inp.value = String((+inp.value||1)+1);
+      inp.dispatchEvent(new Event("change"));
     });
-
-    grid.querySelectorAll("[data-qdec]").forEach(b=>{
-      b.addEventListener("click", ()=>{
-        const id = b.getAttribute("data-qdec");
-        const inp = grid.querySelector(`[data-qty="${id}"]`);
-        inp.value = String(Math.max(1, (Number(inp.value)||1) - 1));
-        inp.dispatchEvent(new Event("change"));
-      });
+  });
+  grid.querySelectorAll("[data-qdec]").forEach(b => {
+    b.addEventListener("click", () => {
+      const id = b.getAttribute("data-qdec");
+      const inp = grid.querySelector(`[data-qty="${id}"]`);
+      inp.value = String(Math.max(1,(+inp.value||1)-1));
+      inp.dispatchEvent(new Event("change"));
     });
+  });
 
-    // add to cart
-    grid.querySelectorAll("[data-add]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-add");
-        const it = ITEMS.find(x=>x.id===id);
-        const mode = "$";
-        const unitPrice = it.prices[mode];
-        const qty = Math.max(1, Math.floor(Number(grid.querySelector(`[data-qty="${id}"]`).value) || 1));
-        const key = `${id}|${mode}`;
+  // Add to cart
+  grid.querySelectorAll("[data-add]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-add");
+      const it = ITEMS.find(x=>x.id===id);
+      const mode = selectedMode[id] || "unite";
+      const unitPrice = mode==="dc" ? priceDC(it) : priceUnite(it);
+      const qty = Math.max(1, Math.floor(+grid.querySelector(`[data-qty="${id}"]`).value||1));
+      const modeLabel = mode==="dc" ? labelDC(it) : labelUnite(it);
+      const key = `${id}|${mode}`;
 
-        const existing = cart.get(key);
-        if(existing) existing.qty += qty;
-        else cart.set(key, { id, name: it.name, mode, unitPrice, qty });
+      const existing = cart.get(key);
+      if (existing) existing.qty += qty;
+      else cart.set(key, { id, name: it.name, mode, modeLabel, unitPrice, qty });
 
-        syncCount();
-      });
+      syncCount();
     });
+  });
+}
+
+function syncCount() {
+  let n = 0;
+  for (const [,l] of cart) n += l.qty;
+  itemsCountEl.textContent = n;
+}
+
+function renderCart() {
+  if (!cart.size) {
+    cartLines.innerHTML = `<div class="muted">Panier vide.</div>`;
+    totalDollarEl.textContent = "0";
+    return;
   }
-
-  function syncCount(){
-    let count = 0;
-    for(const [,line] of cart) count += line.qty;
-    itemsCountEl.textContent = count;
-  }
-
-  function renderCart(){
-    if(cart.size===0){
-      cartLines.innerHTML = `<div class="muted">Panier vide.</div>`;
-      totalDollarEl.textContent = "0";
-      return;
-    }
-
-    let total$ = 0;
-
-    const lines = [];
-    for(const [key, line] of cart.entries()){
-      const lineTotal = line.unitPrice * line.qty;
-      if(line.mode === "$") total$ += lineTotal;
-      else totalPBS += lineTotal;
-
-      lines.push(`
-        <div class="line">
-          <div>
-            <b>${line.name}</b>
-            <div class="small muted">${line.unitPrice} ${line.mode} • x${line.qty}</div>
-          </div>
-          <div class="qtyBtns">
-            <button class="mini" data-dec="${key}">−</button>
-            <button class="mini" data-inc="${key}">+</button>
-          </div>
+  let total = 0;
+  const lines = [];
+  for (const [key, line] of cart.entries()) {
+    const lt = line.unitPrice * line.qty;
+    total += lt;
+    lines.push(`
+      <div class="line">
+        <div>
+          <b>${line.name}</b>
+          <div class="small muted">${line.unitPrice} $ • ${line.modeLabel} • x${line.qty}</div>
         </div>
-      `);
-    }
+        <div class="qtyBtns">
+          <button class="mini" data-dec="${key}">−</button>
+          <button class="mini" data-inc="${key}">+</button>
+        </div>
+      </div>`);
+  }
+  cartLines.innerHTML = lines.join("");
+  totalDollarEl.textContent = String(total);
 
-    cartLines.innerHTML = lines.join("");
-    totalDollarEl.textContent = String(total$);
-
-    cartLines.querySelectorAll("[data-inc]").forEach(b=>{
-      b.addEventListener("click", ()=>{
-        const key = b.getAttribute("data-inc");
-        cart.get(key).qty += 1;
-        syncCount(); renderCart();
-      });
+  cartLines.querySelectorAll("[data-inc]").forEach(b => {
+    b.addEventListener("click", () => { cart.get(b.getAttribute("data-inc")).qty+=1; syncCount(); renderCart(); });
+  });
+  cartLines.querySelectorAll("[data-dec]").forEach(b => {
+    b.addEventListener("click", () => {
+      const key = b.getAttribute("data-dec");
+      const line = cart.get(key);
+      line.qty -= 1;
+      if (line.qty<=0) cart.delete(key);
+      syncCount(); renderCart();
     });
+  });
+}
 
-    cartLines.querySelectorAll("[data-dec]").forEach(b=>{
-      b.addEventListener("click", ()=>{
-        const key = b.getAttribute("data-dec");
-        const line = cart.get(key);
-        line.qty -= 1;
-        if(line.qty <= 0) cart.delete(key);
-        syncCount(); renderCart();
-      });
-    });
+function showMsg(text, type) {
+  msgEl.textContent = text;
+  msgEl.className = "small "+(type==="err"?"err":type==="ok"?"ok":"muted");
+}
+
+async function sendOrder() {
+  const username = $("username").value.trim();
+  const discordPseudo = $("discordPseudo").value.trim();
+  const note = $("note").value || "";
+  if (!username) return showMsg("❌ Mets ton pseudo en jeu.", "err");
+  if (!discordPseudo) return showMsg("❌ Mets ton pseudo Discord.", "err");
+  if (!cart.size) return showMsg("❌ Ton panier est vide.", "err");
+
+  let total = 0;
+  const items = [];
+  for (const [, line] of cart.entries()) {
+    const lt = line.unitPrice * line.qty;
+    total += lt;
+    items.push({ id: line.id, name: line.name, mode: line.modeLabel, qty: line.qty, price: line.unitPrice, total: lt });
   }
 
-  function showMsg(text, type){
-    msgEl.textContent = text;
-    msgEl.className = "small " + (type==="err" ? "err" : type==="ok" ? "ok" : "muted");
-  }
+  showMsg("⏳ Création du ticket Discord...", "muted");
 
-  async function sendOrder(){
-    const username = $("username").value.trim();
-    const discordPseudo = $("discordPseudo").value.trim();
-    const note = $("note").value || "";
-
-    if(!username) return showMsg("❌ Mets ton pseudo en jeu.", "err");
-    if(!discordPseudo) return showMsg("❌ Mets ton pseudo Discord.", "err");
-    if(cart.size===0) return showMsg("❌ Ton panier est vide.", "err");
-
-    // payload lignes + totaux
-    let total$ = 0, totalPBS = 0;
-    const items = [];
-    for(const [, line] of cart.entries()){
-      const lineTotal = line.unitPrice * line.qty;
-      if(line.mode === "$") total$ += lineTotal; else totalPBS += lineTotal;
-      items.push({
-        id: line.id,
-        name: line.name,
-        mode: line.mode,
-        unitPrice: line.unitPrice,
-        qty: line.qty,
-        total: lineTotal
-      });
-    }
-
-    showMsg("⏳ Création du ticket Discord...", "muted");
-
-    const res = await fetch("/api/create-ticket", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-  pseudo: username,          // ✅ le bot attend "pseudo"
-  discordPseudo,             // ✅ nouveau champ (pseudo Discord)
-  note,                      // ✅ ok
-  items: items.map(i => ({   // ✅ le bot attend "price" / "qty"
-    id: i.id,
-    name: i.name,
-    mode: i.mode,
-    qty: i.qty,
-    price: i.unitPrice,      // ✅ unitPrice -> price
-    total: i.total
-  })),
-  totalDollar: total$,       // ✅ le bot attend "totalDollar"
-})
-
-    });
-
-    const data = await res.json().catch(()=> ({}));
-    if(!res.ok || !data.ok){
-      return showMsg("❌ Erreur: " + (data.error || "impossible de créer le ticket"), "err");
-    }
-
-    cart.clear();
-    syncCount();
-    renderCart();
-    const id = data.orderId || data.channelId || "?";
-    const name = data.channelName ? ` (${data.channelName})` : "";
-    showMsg("✅ Ticket créé ! ID: " + id + name, "ok");
-  }
-
-  // UI events
-  $("openCart").addEventListener("click", openCart);
-  $("closeCart").addEventListener("click", closeCart);
-  overlay.addEventListener("click", closeCart);
-
-  $("orderBtn").addEventListener("click", openCart);
-  $("send").addEventListener("click", sendOrder);
-
-  $("toTop").addEventListener("click", ()=>window.scrollTo({top:0, behavior:"smooth"}));
-
-  $("reset").addEventListener("click", ()=>{
-    qEl.value = "";
-    minEl.value = 0; maxEl.value = 5000;
-    activeCat = "Tous";
-    minLabel.textContent = "0";
-    maxLabel.textContent = "5000";
-    renderCats(); renderProducts();
+  const res = await fetch("/api/create-ticket", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pseudo: username, discordPseudo, note, items, totalDollar: total })
   });
 
-  minEl.addEventListener("input", ()=>{
-    if(Number(minEl.value) > Number(maxEl.value)) minEl.value = maxEl.value;
-    minLabel.textContent = minEl.value;
-    renderProducts();
-  });
-  maxEl.addEventListener("input", ()=>{
-    if(Number(maxEl.value) < Number(minEl.value)) maxEl.value = minEl.value;
-    maxLabel.textContent = maxEl.value;
-    renderProducts();
-  });
-  qEl.addEventListener("input", renderProducts);
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok || !data.ok)
+    return showMsg("❌ Erreur: "+(data.error||"impossible de créer le ticket"), "err");
 
-  // init
-  (async () => {
+  cart.clear(); syncCount(); renderCart();
+  const id = data.orderId || data.channelId || "?";
+  const name = data.channelName ? ` (${data.channelName})` : "";
+  showMsg("✅ Ticket créé ! ID: "+id+name, "ok");
+}
+
+// Events
+$("openCart").addEventListener("click", openCart);
+$("closeCart").addEventListener("click", closeCart);
+overlay.addEventListener("click", closeCart);
+$("orderBtn").addEventListener("click", openCart);
+$("send").addEventListener("click", sendOrder);
+$("toTop").addEventListener("click", ()=>window.scrollTo({top:0,behavior:"smooth"}));
+$("reset").addEventListener("click", ()=>{
+  qEl.value=""; minEl.value=0; maxEl.value=5000;
+  activeCat="Tous"; minLabel.textContent="0"; maxLabel.textContent="5000";
+  renderCats(); renderProducts();
+});
+minEl.addEventListener("input", ()=>{
+  if(+minEl.value>+maxEl.value) minEl.value=maxEl.value;
+  minLabel.textContent=minEl.value; renderProducts();
+});
+maxEl.addEventListener("input", ()=>{
+  if(+maxEl.value<+minEl.value) maxEl.value=minEl.value;
+  maxLabel.textContent=maxEl.value; renderProducts();
+});
+qEl.addEventListener("input", renderProducts);
+
+(async()=>{
   try {
     await loadItemsFromJsonBin();
-    renderCats();
-    renderProducts();
-    syncCount();
-  } catch (e) {
+    renderCats(); renderProducts(); syncCount();
+  } catch(e) {
     console.error(e);
-    // fallback UI
-    document.getElementById("empty").style.display = "block";
-    document.getElementById("empty").textContent =
-      "Impossible de charger les articles (JSONBin).";
+    $("empty").style.display="block";
+    $("empty").textContent="Impossible de charger les articles (JSONBin).";
   }
 })();
-
 </script>
 </body>
 </html>

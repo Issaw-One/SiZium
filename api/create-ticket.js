@@ -112,7 +112,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "Catégorie introuvable" });
     }
 
-    // Résolution du membre Discord
     let clientId = extractDiscordId(discordPseudo);
     let resolvedMember = null;
     let resolveReason = null;
@@ -158,10 +157,13 @@ export default async function handler(req, res) {
       permissionOverwrites
     });
 
+    // Affichage des items avec le mode (DC / Unité)
     const lines = items
-      .map(it =>
-        `• ${it.name ?? "Item"}${it.desc ? ` (${it.desc})` : ""} x${it.qty ?? 1} — ${it.price ?? 0}$`
-      )
+      .map(it => {
+        const modeTag = it.mode ? ` [${it.mode}]` : "";
+        const total   = it.total ?? ((it.price ?? 0) * (it.qty ?? 1));
+        return `• **${it.name ?? "Item"}**${modeTag} x${it.qty ?? 1} — ${it.price ?? 0}$ l'unité → **${total}$**`;
+      })
       .join("\n");
 
     const totalDollarVal = resolvedTotals?.dollar ?? totalDollar ?? 0;
