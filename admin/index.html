@@ -67,37 +67,6 @@
       width: auto;
     }
 
-    #login-view{
-      flex:1; display:flex; align-items:center; justify-content:center;
-      padding:20px;
-    }
-    .login-box{
-      width:100%; max-width:400px;
-      background:var(--panel);
-      padding:30px;
-      border-radius:16px;
-      border:1px solid var(--border);
-      text-align:center;
-    }
-    .login-box h1{margin-top:0}
-    .login-box form{display:flex; flex-direction:column; gap:15px; margin-top:20px}
-
-    .forgot-link {
-      background: none;
-      border: none;
-      color: var(--primary);
-      margin-top: 15px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.9rem;
-      text-decoration: underline;
-      opacity: 0.8;
-      transition: 0.2s;
-    }
-    .forgot-link:hover {
-      opacity: 1;
-    }
-
     #admin-view{
       max-width:1200px; margin:0 auto; width:100%; padding:20px;
     }
@@ -183,55 +152,29 @@
       z-index: 999;
     }
     @keyframes slideIn{ from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1}}
+
+    .import-export-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
 
-  <div id="login-view">
-    <div class="login-box">
-      <div class="brand">🔒 Admin Access</div>
-      <p> </p>
-      <form id="loginForm">
-        <input type="email" id="email" placeholder="Email admin" required>
-        <input type="password" id="password" placeholder="Mot de passe" required>
-        <button type="submit" class="btn primary">Se connecter</button>
-      </form>
-      <!-- Ajout du bouton Mot de passe oublié -->
-      <button type="button" class="forgot-link" id="forgotPwdBtn">Mot de passe oublié ?</button>
-      
-      <p id="loginError" style="color:var(--danger); display:none; margin-top:10px"></p>
-    </div>
-  </div>
-
-  <div id="admin-view" class="hidden">
+  <div id="admin-view">
     <header>
       <div class="brand">Palazone <span style="color:#fff; font-weight:400">Manager</span></div>
-      <button class="btn" id="logoutBtn">Déconnexion</button>
+      <div class="import-export-bar">
+        <button class="btn" id="exportBtn" title="Exporter les données en JSON">⬇️ Export JSON</button>
+        <label class="btn" title="Importer des données JSON" style="cursor:pointer">
+          ⬆️ Import JSON
+          <input type="file" id="importFile" accept=".json" style="display:none">
+        </label>
+      </div>
     </header>
-    <div style="
-  background: linear-gradient(135deg, rgba(53,242,255,.07), rgba(167,139,250,.07));
-  border: 1px solid rgba(53,242,255,.2);
-  border-left: 3px solid var(--primary);
-  border-radius: 12px;
-  padding: 16px 22px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-">
-  <div style="font-size: 1.4rem; flex-shrink:0;">📬</div>
-  <div>
-    <div style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary); margin-bottom: 4px;">
-      Communication interne — Administrateurs
-    </div>
-    <div style="font-size: 0.95rem; color: var(--text); line-height: 1.5;">
-      Merci à tous les administrateurs de m’envoyer un e-mail à l’adresse suivante&nbsp;:
-      <a href="mailto:mathis@flixium.site" style="color: var(--primary); font-weight: 600; text-decoration: none; margin-left: 4px;">
-        mathis@flixium.site
-      </a>
-    </div>
-  </div>
-</div>
+
     <div class="toolbar">
       <h2 style="margin:0">Produits (<span id="count">0</span>)</h2>
       <button class="btn primary" id="addBtn">+ Ajouter un produit</button>
@@ -295,124 +238,70 @@
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    // Ajout de sendPasswordResetEmail dans l'import
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-    /**
-     * ✅ Firebase config dans le code (OK)
-     * Remplace par les VRAIES valeurs de ton projet Firebase.
-     */
-    const firebaseConfig = {
-      apiKey: "AIzaSyB_wo3eyil5Nr8-FaogEGWthscJ3SeBmu8",
-    authDomain: "palazone.firebaseapp.com",
-    projectId: "palazone",
-    storageBucket: "palazone.firebasestorage.app",
-    messagingSenderId: "519974328064",
-    appId: "1:519974328064:web:20f77d9932b401aa8a45e5"
-    };
-
-    /**
-     * 🔒 JSONBin : PLUS AUCUNE CLE ICI
-     * On passe par /api/jsonbin (route Vercel) qui utilise:
-     * - process.env.JSONBIN_BIN_ID
-     * - process.env.JSONBIN_MASTER_KEY
-     */
-
-    // Initialisation Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+  <script>
+    const STORAGE_KEY = "palazone_items";
 
     let items = [];
     let isEditMode = false;
 
-    const loginView = document.getElementById("login-view");
-    const adminView = document.getElementById("admin-view");
     const listEl = document.getElementById("list");
     const modal = document.getElementById("modal");
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loginView.classList.add("hidden");
-        adminView.classList.remove("hidden");
-        loadData();
-      } else {
-        loginView.classList.remove("hidden");
-        adminView.classList.add("hidden");
-      }
-    });
-
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("email").value;
-      const pass = document.getElementById("password").value;
+    // ── Chargement initial depuis localStorage ──────────────────────────
+    function loadData() {
       try {
-        await signInWithEmailAndPassword(auth, email, pass);
-      } catch (error) {
-        document.getElementById("loginError").textContent = "Identifiants invalides ou erreur de config.";
-        document.getElementById("loginError").style.display = "block";
+        const raw = localStorage.getItem(STORAGE_KEY);
+        items = raw ? JSON.parse(raw) : [];
+      } catch(e) {
+        items = [];
       }
-    });
-
-    // Fonction pour le mot de passe oublié
-    document.getElementById("forgotPwdBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const errorEl = document.getElementById("loginError");
-      
-      if (!email) {
-        errorEl.textContent = "Veuillez entrer votre adresse e-mail dans le champ ci-dessus, puis cliquez sur 'Mot de passe oublié ?'.";
-        errorEl.style.display = "block";
-        return;
-      }
-
-      try {
-        await sendPasswordResetEmail(auth, email);
-        errorEl.style.display = "none";
-        showToast("Un lien de réinitialisation a été envoyé !", "success");
-      } catch (error) {
-        console.error(error);
-        errorEl.textContent = "Erreur : Compte introuvable ou e-mail invalide.";
-        errorEl.style.display = "block";
-      }
-    });
-
-    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
-
-    async function loadData() {
-      showToast("Chargement des produits...");
-      try {
-        const res = await fetch("/api/jsonbin", { method: "GET" });
-        if (!res.ok) throw new Error("Réponse API invalide");
-        const data = await res.json();
-
-        items = data.record?.items || [];
-        render();
-        showToast("Données chargées !", "success");
-      } catch (e) {
-        console.error(e);
-        showToast("Erreur lors du chargement", "err");
-      }
+      render();
+      showToast("Données chargées !", "success");
     }
 
-    async function saveData() {
-      showToast("Enregistrement...");
-      try {
-        const res = await fetch("/api/jsonbin", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items })
-        });
-
-        if (!res.ok) throw new Error("Impossible de sauvegarder via l'API");
-        showToast("Boutique mise à jour !", "success");
-      } catch (e) {
-        console.error(e);
-        showToast("Erreur sauvegarde", "err");
-        alert("Échec de la sauvegarde : " + e.message);
-      }
+    // ── Sauvegarde dans localStorage ────────────────────────────────────
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      showToast("Boutique mise à jour !", "success");
     }
 
+    // ── Export JSON ─────────────────────────────────────────────────────
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify({ items }, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "palazone_items.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // ── Import JSON ─────────────────────────────────────────────────────
+    document.getElementById("importFile").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (Array.isArray(data.items)) {
+            if (confirm(`Importer ${data.items.length} produit(s) ? Les données actuelles seront remplacées.`)) {
+              items = data.items;
+              saveData();
+              render();
+              showToast("Import réussi !", "success");
+            }
+          } else {
+            showToast("Format JSON invalide", "err");
+          }
+        } catch {
+          showToast("Fichier JSON invalide", "err");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+
+    // ── Rendu de la liste ───────────────────────────────────────────────
     function render() {
       document.getElementById("count").textContent = items.length;
 
@@ -447,29 +336,29 @@
             <button class="btn danger" onclick="deleteItem('${String(item.id)}')">🗑️</button>
           </div>
         </div>
-      `}).join("");
+      `;
+      }).join("");
     }
 
-    // Toggle la visibilité en un clic
-    window.toggleVisibility = async (id) => {
+    // ── Actions ─────────────────────────────────────────────────────────
+    window.toggleVisibility = (id) => {
       const item = items.find(i => i.id === id);
-      if(!item) return;
-      item.hidden = !item.hidden; // Inverse le statut (vrai/faux)
+      if (!item) return;
+      item.hidden = !item.hidden;
       render();
-      await saveData();
+      saveData();
     };
 
-    // Expose pour les onclick inline
-    window.deleteItem = async (id) => {
-      if(!confirm("Supprimer définitivement ce produit ?")) return;
+    window.deleteItem = (id) => {
+      if (!confirm("Supprimer définitivement ce produit ?")) return;
       items = items.filter(i => i.id !== id);
       render();
-      await saveData();
+      saveData();
     };
 
     window.editItem = (id) => {
       const item = items.find(i => i.id === id);
-      if(!item) return;
+      if (!item) return;
       fillForm(item);
       isEditMode = true;
       document.getElementById("modalTitle").textContent = "Modifier le produit";
@@ -484,7 +373,7 @@
       modal.classList.remove("hidden");
     });
 
-    document.getElementById("productForm").addEventListener("submit", async (e) => {
+    document.getElementById("productForm").addEventListener("submit", (e) => {
       e.preventDefault();
 
       const newItem = {
@@ -494,23 +383,23 @@
         tag: document.getElementById("inpTag").value,
         desc: document.getElementById("inpDesc").value,
         img: document.getElementById("inpImg").value,
-        hidden: document.getElementById("inpHidden").checked, // Récupère l'état de la case
+        hidden: document.getElementById("inpHidden").checked,
         prices: {
           "$": Number(document.getElementById("inpPriceDollar").value),
           "PBS": Number(document.getElementById("inpPricePBS").value)
         }
       };
 
-      if(isEditMode) {
+      if (isEditMode) {
         const idx = items.findIndex(i => i.id === newItem.id);
-        if(idx !== -1) items[idx] = newItem;
+        if (idx !== -1) items[idx] = newItem;
       } else {
         items.push(newItem);
       }
 
       modal.classList.add("hidden");
       render();
-      await saveData();
+      saveData();
     });
 
     document.getElementById("closeModal").addEventListener("click", () => modal.classList.add("hidden"));
@@ -524,28 +413,29 @@
       document.getElementById("inpImg").value = d.img || "";
       document.getElementById("inpPriceDollar").value = d.prices?.["$"] || 0;
       document.getElementById("inpPricePBS").value = d.prices?.["PBS"] || 0;
-      document.getElementById("inpHidden").checked = d.hidden || false; // Coche la case si l'item est caché
+      document.getElementById("inpHidden").checked = d.hidden || false;
     }
 
-    function showToast(msg, type="info") {
+    function showToast(msg, type = "info") {
       const el = document.createElement("div");
       el.className = "toast";
       el.textContent = msg;
-      if(type==="success") el.style.borderLeft = "4px solid var(--success)";
-      if(type==="err") el.style.borderLeft = "4px solid var(--danger)";
+      if (type === "success") el.style.borderLeft = "4px solid var(--success)";
+      if (type === "err") el.style.borderLeft = "4px solid var(--danger)";
       document.body.appendChild(el);
-      setTimeout(()=>el.remove(), 3000);
+      setTimeout(() => el.remove(), 3000);
     }
 
-    // Petit helper pour éviter de casser le HTML si un champ contient < > etc.
     function escapeHtml(str) {
       return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     }
+
+    // ── Init ─────────────────────────────────────────────────────────────
+    loadData();
   </script>
 </body>
 </html>
