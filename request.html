@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demande Accès Administrateur</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: #2a2a3a;
+    --border-glow: #4f46e5;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --text: #e8e8f0;
+    --text-muted: #6b6b8a;
+    --success: #22d3a4;
+    --error: #f43f5e;
+    --gold: #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    padding: 24px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+    animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    border: 1px solid rgba(99,102,241,0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    background: rgba(99,102,241,0.06);
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  h1 span { color: var(--accent2); }
+
+  .subtitle {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  }
+
+  /* Onglets */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--surface2);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-muted);
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .form-group { margin-bottom: 20px; }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  input, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 12px 16px;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    background: #13131e;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn.btn-danger { background: var(--error); }
+  .btn.btn-danger:hover { background: #ff4d6d; }
+
+  .btn:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+
+  .loading-state .spinner { display: inline-block; }
+  .loading-state .btn-text { display: none; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 12px;
+    z-index: 100;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.4s;
+    border: 1px solid;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.3); color: var(--error); }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .user-info { font-size: 11px; color: var(--text-muted); }
+  .user-info span { color: var(--text); }
+
+  .btn-reset {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .success-overlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .success-overlay.show { display: flex; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="badge">Espace Sécurisé</div>
+    <h1>Gestion des<br><span>Comptes Palazone</span></h1>
+    <p class="subtitle">Veuillez vous authentifier pour gérer les utilisateurs.</p>
+  </div>
+
+  <!-- CHARGEMENT INITIAL -->
+  <div id="loadingSection" class="card" style="text-align: center;">
+    <div style="width: 30px; height: 30px; border: 3px solid rgba(99,102,241,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto;"></div>
+  </div>
+
+  <!-- CONNEXION FIREBASE -->
+  <div id="loginSection" class="card" style="display: none;">
+    <div class="form-group">
+      <label>E-mail Administrateur</label>
+      <input type="email" id="loginEmail" placeholder="admin@palazone.fr">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="loginPass" placeholder="••••••••">
+    </div>
+    <button class="btn" id="loginSubmitBtn">
+      <span class="btn-text">Se connecter</span>
+      <div class="spinner"></div>
+    </button>
+  </div>
+
+  <!-- ACCES REFUSE -->
+  <div id="deniedSection" class="card" style="display: none; text-align: center;">
+    <h2 style="color: var(--error); margin-bottom: 12px;">Accès non autorisé</h2>
+    <p class="subtitle" id="deniedMsg"></p>
+    <button class="btn-reset" id="deniedLogoutBtn" style="margin-top: 20px;">Utiliser un autre compte</button>
+  </div>
+
+  <!-- FORMULAIRE PRINCIPAL -->
+  <div id="appSection" style="display: none;">
+    <div class="top-bar">
+      <div class="user-info">Admin : <span id="currentUserEmail"></span></div>
+      <button class="btn-reset" id="logoutBtn">Déconnexion</button>
+    </div>
+
+    <div class="card">
+      <div id="formContent">
+        <div class="tabs">
+          <div class="tab active" data-type="promote">Promotion</div>
+          <div class="tab" data-type="delete">Suppression</div>
+        </div>
+
+        <!-- Section Promotion -->
+        <div id="promoteFields">
+          <div class="form-group">
+            <label>E-mail à promouvoir</label>
+            <input type="email" id="targetEmail" placeholder="utilisateur@exemple.com">
+          </div>
+          
+          <div class="form-group">
+            <label>Serveur cible</label>
+            <select id="server">
+              <option value="" disabled selected>Choisir un serveur...</option>
+              <option value="Production">⚡ Production</option>
+              <option value="Staging">🧪 Staging</option>
+              <option value="Développement">🛠 Développement</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Section Suppression -->
+        <div id="deleteFields" style="display: none;">
+          <div class="form-group">
+            <label>E-mail du compte à supprimer</label>
+            <input type="email" id="deleteEmail" placeholder="utilisateur@exemple.com">
+          </div>
+          <p class="subtitle" style="color: var(--error); margin-bottom: 20px; font-size: 10px;">Attention : Cette action est irréversible après validation Discord.</p>
+        </div>
+        
+        <button class="btn" id="submitBtn">
+          <span class="btn-text">Envoyer la demande</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+
+      <div class="success-overlay" id="successOverlay">
+        <div style="font-size: 32px; color: var(--success);">✓</div>
+        <div style="font-weight: 700;">Demande envoyée</div>
+        <p class="subtitle" id="successMsg"></p>
+        <button class="btn-reset" id="resetBtn">Effectuer une autre action</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" style="text-align: center; margin-top: 20px; font-size: 10px; color: var(--text-muted);">
+    Palazone Admin Portal — v2.5
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+  // --- CONFIGURATION ---
+  const WHIETLIST = []; 
+  const WEBHOOK = 'https://discord.com/api/webhooks/1455289664868061234/n96UV0nr1Z5CLqjER4KeHtn1Q_FYDXGg0mUfu3Qbl4F3MG67Fbu9u5H26BT16WFKyC2l';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB_wo3eyil5Nr8-FaogEGWthscJ3SeBmu8",
+    authDomain: "palazone.firebaseapp.com",
+    projectId: "palazone",
+    storageBucket: "palazone.firebasestorage.app",
+    messagingSenderId: "519974328064",
+    appId: "1:519974328064:web:20f77d9932b401aa8a45e5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  let currentAction = 'promote';
+
+  const sections = {
+    loading: document.getElementById('loadingSection'),
+    login: document.getElementById('loginSection'),
+    denied: document.getElementById('deniedSection'),
+    app: document.getElementById('appSection')
+  };
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show error';
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function showSection(name) {
+    Object.keys(sections).forEach(k => sections[k].style.display = k === name ? 'block' : 'none');
+  }
+
+  // Gestion des onglets
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentAction = tab.dataset.type;
+      
+      document.getElementById('promoteFields').style.display = currentAction === 'promote' ? 'block' : 'none';
+      document.getElementById('deleteFields').style.display = currentAction === 'delete' ? 'block' : 'none';
+      
+      const btn = document.getElementById('submitBtn');
+      if (currentAction === 'delete') {
+        btn.classList.add('btn-danger');
+        btn.querySelector('.btn-text').textContent = "Demander la suppression";
+      } else {
+        btn.classList.remove('btn-danger');
+        btn.querySelector('.btn-text').textContent = "Soumettre la demande";
+      }
+    });
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      if (WHIETLIST.length === 0 || WHIETLIST.includes(user.email)) {
+        document.getElementById('currentUserEmail').textContent = user.email;
+        showSection('app');
+      } else {
+        document.getElementById('deniedMsg').textContent = `Accès refusé pour ${user.email}.`;
+        showSection('denied');
+      }
+    } else {
+      showSection('login');
+    }
+  });
+
+  document.getElementById('loginSubmitBtn').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value;
+    const pass = document.getElementById('loginPass').value;
+    const btn = document.getElementById('loginSubmitBtn');
+    if (!email || !pass) return showToast("Champs requis");
+    btn.classList.add('loading-state');
+    btn.disabled = true;
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (e) {
+      showToast("Identifiants incorrects");
+    } finally {
+      btn.classList.remove('loading-state');
+      btn.disabled = false;
+    }
+  });
+
+  const logout = () => signOut(auth);
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('deniedLogoutBtn').addEventListener('click', logout);
+
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    const target = currentAction === 'promote' ? document.getElementById('targetEmail').value : document.getElementById('deleteEmail').value;
+    const server = document.getElementById('server').value;
+    
+    if (!target || (currentAction === 'promote' && !server)) {
+      return showToast("Veuillez remplir tous les champs");
+    }
+    
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading-state');
+    btn.disabled = true;
+
+    const adminEmail = auth.currentUser.email;
+    
+    const embed = {
+      title: currentAction === 'promote' ? "⚡ Promotion d'accès" : "⚠️ Demande de Suppression",
+      color: currentAction === 'promote' ? 0x6366f1 : 0xf43f5e,
+      fields: [
+        { name: "Cible", value: `\`${target}\``, inline: false },
+        { name: "Demandeur (Admin)", value: `\`${adminEmail}\``, inline: true }
+      ],
+      timestamp: new Date().toISOString()
+    };
+
+    if (currentAction === 'promote') {
+      embed.fields.push({ name: "Serveur", value: `\`${server}\``, inline: true });
+    }
+
+    try {
+      const res = await fetch(WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ embeds: [embed] })
+      });
+
+      if (res.ok) {
+        document.getElementById('formContent').style.display = 'none';
+        document.getElementById('successOverlay').classList.add('show');
+        document.getElementById('successMsg').textContent = currentAction === 'promote' 
+          ? `La promotion de ${target} est en cours de traitement.`
+          : `La demande de suppression pour ${target} a été envoyée.`;
+      } else {
+        showToast("Erreur d'envoi Discord");
+      }
+    } catch (e) {
+      showToast("Erreur de connexion");
+    } finally {
+      btn.classList.remove('loading-state');
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    document.getElementById('formContent').style.display = 'block';
+    document.getElementById('successOverlay').classList.remove('show');
+    document.getElementById('targetEmail').value = '';
+    document.getElementById('deleteEmail').value = '';
+  });
+</script>
+</body>
+</html>

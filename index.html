@@ -5,455 +5,413 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="shortcut icon" href="content.png" type="image/x-icon">
   <title>SiZium Shop</title>
-
+  <!-- Preconnect for fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-
+  <!-- font-display:swap = no render block -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="style.css">
-
-  <style>
-    /* Toggle DC / Unité */
-    .modeToggle {
-      display: flex;
-      background: rgba(0,0,0,.3);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 8px;
-      overflow: hidden;
-      font-size: 0.8rem;
-      margin-bottom: 8px;
-    }
-    .modeToggle button {
-      flex: 1;
-      padding: 6px 8px;
-      border: none;
-      background: transparent;
-      color: rgba(255,255,255,.5);
-      font-family: inherit;
-      font-weight: 600;
-      cursor: pointer;
-      transition: .2s;
-      font-size: 0.8rem;
-      line-height: 1.3;
-    }
-    .modeToggle button.active {
-      background: rgba(255,255,255,.14);
-      color: #fff;
-    }
-    .modeToggle button:disabled {
-      opacity: 0.25;
-      cursor: not-allowed;
-    }
-  </style>
 </head>
-
 <body>
-  <div class="topbar">
-    <div class="wrap">
-      <div class="brand">
-        <img src="baf6edb7f1fdbf9518edb15ce85740c6.webp" alt="Palazone" class="logo">
-        <div>SiZium<br><span class="small"></span></div>
-      </div>
-      <div class="actions">
-        <div class="pill">🧩 <span id="itemsCount">0</span> item(s)</div>
-        <button class="btn" id="openCart">🛒 Panier</button>
-      </div>
+  <div id="serverOverlay">
+    <img src="baf6edb7f1fdbf9518edb15ce85740c6.webp" alt="SiZium" class="server-logo" width="72" height="72">
+    <div class="server-title">SiZium Shop</div>
+    <div class="server-subtitle">Choisissez votre serveur pour accéder au catalogue</div>
+    <div class="server-grid" id="serverGrid"></div>
+  </div>
+
+  <div id="serverPickerBackdrop">
+    <div id="serverPickerModal">
+      <h3>Changer de serveur</h3>
+      <p>Sélectionnez un serveur pour changer le catalogue</p>
+      <div class="sp-grid" id="spGrid"></div>
     </div>
   </div>
 
-  <section class="main">
-    <aside class="panel side">
-      <div class="panelTitle">Filtres <button class="btn secondary" id="reset">Réinitialiser</button></div>
-
-      <div class="field">
-        <div class="label">Recherche</div>
-        <input class="input" id="q" placeholder="Rechercher un item..." />
-      </div>
-
-      <div class="field">
-        <div class="label">Catégories</div>
-        <div class="chips" id="cats"></div>
-      </div>
-
-      <div class="field">
-        <div class="label">Prix</div>
-        <div class="rangeRow small"><span id="minLabel">0</span><span id="maxLabel">50000</span></div>
-        <input type="range" id="min" min="0" max="50000" value="0" />
-        <input type="range" id="max" min="0" max="50000" value="50000" />
-      </div>
-    </aside>
-
-    <main class="panel content">
-      <div class="toolbar">
-        <div class="count">📦 <span id="shown">0</span> produit(s)</div>
-        <div class="row">
-          <button class="btn secondary" id="toTop">⬆️ Haut</button>
-          <button class="btn" id="orderBtn">✅ Commander</button>
+  <div id="appRoot" style="display:none">
+    <div class="topbar">
+      <div class="wrap">
+        <div class="brand">
+          <img src="baf6edb7f1fdbf9518edb15ce85740c6.webp" alt="Palazone" class="logo" width="34" height="34">
+          <div>SiZium<br><span class="small"></span></div>
+        </div>
+        <div class="actions">
+          <div id="serverBadgeWrap"></div>
+          <div class="pill">🧩 <span id="itemsCount">0</span> item(s)</div>
+          <button class="btn" id="openCart">🛒 Panier</button>
         </div>
       </div>
-
-      <div class="grid" id="grid"></div>
-      <div class="empty" id="empty" style="display:none">Aucun produit ne correspond aux filtres.</div>
-    </main>
-  </section>
-
-  <!-- Drawer panier -->
-  <div class="overlay" id="overlay"></div>
-  <div class="drawer" id="drawer">
-    <div class="drawerHeader">
-      <div style="font-weight:900">🛒 Ton panier</div>
-      <button class="btn secondary" id="closeCart">Fermer</button>
     </div>
 
-    <div class="drawerBody">
-      <div class="label">Pseudo Minecraft</div>
-      <input class="input" id="username" placeholder="Ex: Issaw" />
+    <button id="cartFab">🛒&nbsp;<span id="cartFabCount">0</span></button>
 
-      <div style="margin-top:10px">
-        <div class="label">Pseudo Discord</div>
-        <input class="input" id="discordPseudo" placeholder="Ex: issaw" />
+    <section class="main">
+      <aside class="panel side">
+        <button id="filterToggleBtn">🔍 Filtres <span id="filterArrow">▼</span></button>
+        <div class="filterCollapsible" id="filterCollapsible">
+          <div class="panelTitle">Filtres <button class="btn secondary" id="reset">Réinitialiser</button></div>
+          <div class="field"><div class="label">Recherche</div><input class="input" id="q" placeholder="Rechercher un item..." /></div>
+          <div class="field"><div class="label">Catégories</div><div class="chips" id="cats"></div></div>
+          <div class="field">
+            <div class="label">Prix</div>
+            <div class="rangeRow small"><span id="minLabel">0</span><span id="maxLabel">50000</span></div>
+            <input type="range" id="min" min="0" max="50000" value="0" />
+            <input type="range" id="max" min="0" max="50000" value="50000" />
+          </div>
+        </div>
+      </aside>
+      <main class="panel content">
+        <div class="toolbar">
+          <div class="count">📦 <span id="shown">0</span> produit(s)</div>
+          <div class="row">
+            <button class="btn secondary" id="toTop">⬆️ Haut</button>
+            <button class="btn" id="orderBtn">✅ Commander</button>
+          </div>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="empty" id="empty" style="display:none">Aucun produit ne correspond aux filtres.</div>
+      </main>
+    </section>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="drawer" id="drawer">
+      <div class="drawerHeader">
+        <div style="font-weight:900">🛒 Ton panier</div>
+        <button class="btn secondary" id="closeCart">Fermer</button>
       </div>
-
-      <div style="margin-top:10px">
-        <div class="label">Note (optionnel)</div>
-        <textarea class="input" id="note" rows="3" placeholder="Disponibilités, précisions..."></textarea>
+      <div class="drawerBody">
+        <div class="label">Pseudo Minecraft</div>
+        <input class="input" id="username" placeholder="Ex: Issaw" />
+        <div style="margin-top:10px"><div class="label">Pseudo Discord</div><input class="input" id="discordPseudo" placeholder="Ex: issaw" /></div>
+        <div style="margin-top:10px"><div class="label">Note (optionnel)</div><textarea class="input" id="note" rows="3" placeholder="Disponibilités, précisions..."></textarea></div>
+        <div style="height:12px"></div>
+        <div class="label">Lignes</div>
+        <div id="cartLines" class="small muted">Panier vide.</div>
+        <div class="totalsBox"><div><b>Total $ :</b> <span id="totalDollar">0</span></div></div>
+        <div id="msg" class="small" style="margin-top:10px"></div>
       </div>
-
-      <div style="height:12px"></div>
-      <div class="label">Lignes</div>
-      <div id="cartLines" class="small muted">Panier vide.</div>
-
-      <div class="totalsBox">
-        <div><b>Total $ :</b> <span id="totalDollar">0</span></div>
+      <div class="drawerFooter">
+        <button class="btn" id="send">Ouvrir le ticket Discord</button>
+        <div class="small muted" style="margin-top:8px">Le ticket sert à confirmer le paiement en jeu et organiser la livraison.</div>
       </div>
-
-      <div id="msg" class="small" style="margin-top:10px"></div>
-    </div>
-
-    <div class="drawerFooter">
-      <button class="btn" id="send">Ouvrir le ticket Discord</button>
-      <div class="small muted" style="margin-top:8px">Le ticket sert à confirmer le paiement en jeu et organiser la livraison.</div>
     </div>
   </div>
 
 <script>
-const BIN_ID = "6941efa5ae596e708f9f0079";
-const ACCESS_KEY = "$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK";
+const SERVERS = [
+  { id:"coral",  name:"Coral",  color:"#FF6B6B", binId:"69bfe30ac3097a1dd54ae210",  accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"  },
+  { id:"blue",   name:"Blue",   color:"#4A9EFF", binId:"69bfe34eb7ec241ddc901b5b",   accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"   },
+  { id:"orange", name:"Orange", color:"#FF9500", binId:"69bfe35cc3097a1dd54ae340", accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK" },
+  { id:"yellow", name:"Yellow", color:"#FFD60A", binId:"69bfe369b7ec241ddc901bb3", accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK" },
+  { id:"white",  name:"White",  color:"#C8C8C8", binId:"69bfe376c3097a1dd54ae398",  accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"  },
+  { id:"black",  name:"Black",  color:"#666666", binId:"69bfe383c3097a1dd54ae3c4",  accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"  },
+  { id:"cyan",   name:"Cyan",   color:"#00D4D4", binId:"69bfe38cc3097a1dd54ae3e3",   accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"   },
+  { id:"lime",   name:"Lime",   color:"#7ED321", binId:"69bfe397aa77b81da909f8be",   accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"   },
+  { id:"red",    name:"Red",    color:"#FF3030", binId:"69bfe3aab7ec241ddc901c77",    accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"    },
+  { id:"mocha",  name:"Mocha",  color:"#C8845A", binId:"69bfe3c0b7ec241ddc901cbc",  accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"  },
+  { id:"jade",   name:"Jade",   color:"#00A86B", binId:"69bfe3caaa77b81da909f942",   accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"   },
+];
 
+let currentServer = null;
 let ITEMS = [];
-
-async function loadItemsFromJsonBin() {
-  const url = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", "X-Access-Key": ACCESS_KEY }
-  });
-  if (!res.ok) throw new Error("JSONBin error: " + res.status);
-  const data = await res.json();
-  const record = data.record;
-  if (!record || !Array.isArray(record.items))
-    throw new Error("Format JSON invalide : attendu { items: [...] }");
-  ITEMS = record.items.filter(item => item.hidden !== true);
-}
-
-// Panier: key = `${id}|${mode}` (mode = "unite" | "dc")
 const cart = new Map();
-// Mode sélectionné par carte
 const selectedMode = {};
-
 let activeCat = "Tous";
 
 const $ = id => document.getElementById(id);
-const grid = $("grid"), empty = $("empty"), shownEl = $("shown");
-const itemsCountEl = $("itemsCount"), catsEl = $("cats");
-const qEl = $("q"), minEl = $("min"), maxEl = $("max");
-const minLabel = $("minLabel"), maxLabel = $("maxLabel");
-const overlay = $("overlay"), drawer = $("drawer");
-const cartLines = $("cartLines"), totalDollarEl = $("totalDollar"), msgEl = $("msg");
+const grid=$("grid"),empty=$("empty"),shownEl=$("shown");
+const itemsCountEl=$("itemsCount"),catsEl=$("cats");
+const qEl=$("q"),minEl=$("min"),maxEl=$("max");
+const minLabel=$("minLabel"),maxLabel=$("maxLabel");
+const overlay=$("overlay"),drawer=$("drawer");
+const cartLines=$("cartLines"),totalDollarEl=$("totalDollar"),msgEl=$("msg");
 
-function openCart()  { overlay.style.display="block";  drawer.style.transform="translateX(0)";   renderCart(); }
-function closeCart() { overlay.style.display="none";   drawer.style.transform="translateX(100%)"; }
-
-// Helpers item
-function hasDC(it)    { return it.dcEnabled !== false    && it.prices?.["dc"] !== undefined; }
-function hasUnite(it) { return it.uniteEnabled !== false && it.prices?.["$"]  !== undefined; }
-function priceDC(it)    { return it.prices?.["dc"] ?? 0; }
-function priceUnite(it) { return it.prices?.["$"]  ?? 0; }
-function labelDC(it)    { return it.dcLabel    || "DC"; }
-function labelUnite(it) { return it.uniteLabel || "Unité"; }
-
-function uniqCats() { return ["Tous", ...new Set(ITEMS.map(i=>i.cat))]; }
-
-function renderCats() {
-  catsEl.innerHTML = uniqCats().map(c =>
-    `<div class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</div>`
-  ).join("");
-  catsEl.querySelectorAll(".chip").forEach(ch => {
-    ch.addEventListener("click", () => { activeCat=ch.dataset.cat; renderCats(); renderProducts(); });
-  });
+// ── Debounce helper ────────────────────────────────────────────────────────────
+function debounce(fn, ms) {
+  let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
 }
 
-function getFilters() {
-  return { q: qEl.value.trim().toLowerCase(), min: +minEl.value, max: +maxEl.value, cat: activeCat };
-}
+// ── Build server selector ─────────────────────────────────────────────────────
+const serverGrid = document.getElementById("serverGrid");
+serverGrid.innerHTML = SERVERS.map(s =>
+  `<div class="server-card" data-sid="${s.id}" style="--sc:${s.color}; border-color:${s.color}22">
+    <div class="server-dot" style="background:${s.color}; box-shadow:0 0 14px ${s.color}66"></div>
+    <div class="server-name">${s.name}</div>
+  </div>`
+).join("");
+serverGrid.querySelectorAll(".server-card").forEach(c => c.addEventListener("click", ()=>selectServer(c.dataset.sid)));
 
-function renderProducts() {
-  const { q, min, max, cat } = getFilters();
-
-  const filtered = ITEMS.filter(it => {
-    if (q && !(it.name.toLowerCase().includes(q) || (it.desc||"").toLowerCase().includes(q))) return false;
-    if (cat !== "Tous" && it.cat !== cat) return false;
-    const hasAny = hasUnite(it) || hasDC(it);
-    if (!hasAny) return true;
-    const matchPrice =
-      (hasUnite(it) && priceUnite(it) >= min && priceUnite(it) <= max) ||
-      (hasDC(it)    && priceDC(it)    >= min && priceDC(it)    <= max);
-    return matchPrice;
-  });
-
-  shownEl.textContent = filtered.length;
-  if (!filtered.length) { grid.innerHTML=""; empty.style.display="block"; return; }
-  empty.style.display = "none";
-
-  grid.innerHTML = filtered.map(it => {
-    // Mode par défaut
-    if (!selectedMode[it.id]) selectedMode[it.id] = hasUnite(it) ? "unite" : "dc";
-    const mode = selectedMode[it.id];
-    const curPrice = mode==="dc" ? priceDC(it) : priceUnite(it);
-    const bothAvail = hasDC(it) && hasUnite(it);
-
-    return `
-    <div class="card">
-      <div class="cardInner">
-        <div class="thumb">
-          ${it.img
-            ? `<img src="${it.img}" alt="${it.name}" onerror="this.outerHTML='<div class=\\'fallback\\'>Image manquante</div>'">`
-            : `<div class="fallback">Aucune image</div>`}
-        </div>
-        <div class="cardTop">
-          <div class="name">${it.name}</div>
-          <div class="tag">${it.tag}</div>
-        </div>
-        <div class="desc">${it.desc}</div>
-
-        ${/* Affiche le toggle seulement si au moins un mode dispo */ (hasDC(it) || hasUnite(it)) ? `
-        <div class="modeToggle">
-          <button type="button"
-            class="${mode==='unite'?'active':''}"
-            ${!hasUnite(it)?'disabled':''}
-            data-mode-btn="${it.id}" data-mode="unite">
-            📦 ${labelUnite(it)}
-          </button>
-          <button type="button"
-            class="${mode==='dc'?'active':''}"
-            ${!hasDC(it)?'disabled':''}
-            data-mode-btn="${it.id}" data-mode="dc">
-            🗄️ ${labelDC(it)}
-          </button>
-        </div>` : ''}
-
-        <div class="modeRow">
-          <div class="qtyPicker">
-            <button type="button" class="qtyBtn" data-qdec="${it.id}">−</button>
-            <input class="qtyInput" type="number" min="1" step="1" value="1" data-qty="${it.id}">
-            <button type="button" class="qtyBtn" data-qinc="${it.id}">+</button>
-          </div>
-          <div class="pricePreview" id="price-${it.id}">${curPrice} $</div>
-        </div>
-
-        <button class="add" data-add="${it.id}">+ Ajouter au panier</button>
-      </div>
+async function selectServer(id) {
+  const srv = SERVERS.find(s=>s.id===id);
+  if(!srv) return;
+  currentServer = srv;
+  document.getElementById("serverBadgeWrap").innerHTML =
+    `<div class="server-badge" id="changeSrv">
+      <div class="sbdot" style="background:${srv.color}"></div>${srv.name}<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="opacity:.6;margin-left:2px"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>`;
-  }).join("");
+  document.getElementById("changeSrv").addEventListener("click", showSelector);
+  document.getElementById("serverOverlay").classList.add("hidden");
+  document.getElementById("appRoot").style.display="block";
+  ITEMS=[]; activeCat="Tous"; qEl.value=""; minEl.value=0; maxEl.value=50000;
 
-  // Toggle mode
-  grid.querySelectorAll("[data-mode-btn]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-mode-btn");
-      const newMode = btn.getAttribute("data-mode");
-      const it = ITEMS.find(x=>x.id===id);
-      selectedMode[id] = newMode;
+  // Show skeleton while loading
+  showSkeletons(6);
+  empty.style.display="none";
+  shownEl.textContent="0";
 
-      grid.querySelectorAll(`[data-mode-btn="${id}"]`).forEach(b =>
-        b.classList.toggle("active", b.getAttribute("data-mode")===newMode)
-      );
-
-      const qty = Math.max(1, +grid.querySelector(`[data-qty="${id}"]`)?.value || 1);
-      const price = newMode==="dc" ? priceDC(it) : priceUnite(it);
-      const el = $("price-"+id);
-      if (el) el.textContent = `${price*qty} $`;
-    });
-  });
-
-  // Quantité
-  grid.querySelectorAll("[data-qty]").forEach(inp => {
-    const id = inp.getAttribute("data-qty");
-    const it = ITEMS.find(x=>x.id===id);
-    const sync = () => {
-      let v = Math.max(1, Math.floor(+inp.value||1));
-      inp.value = v;
-      const mode = selectedMode[id] || "unite";
-      const price = mode==="dc" ? priceDC(it) : priceUnite(it);
-      $("price-"+id).textContent = `${price*v} $`;
-    };
-    sync();
-    inp.addEventListener("input", sync);
-    inp.addEventListener("change", sync);
-  });
-
-  grid.querySelectorAll("[data-qinc]").forEach(b => {
-    b.addEventListener("click", () => {
-      const id = b.getAttribute("data-qinc");
-      const inp = grid.querySelector(`[data-qty="${id}"]`);
-      inp.value = String((+inp.value||1)+1);
-      inp.dispatchEvent(new Event("change"));
-    });
-  });
-  grid.querySelectorAll("[data-qdec]").forEach(b => {
-    b.addEventListener("click", () => {
-      const id = b.getAttribute("data-qdec");
-      const inp = grid.querySelector(`[data-qty="${id}"]`);
-      inp.value = String(Math.max(1,(+inp.value||1)-1));
-      inp.dispatchEvent(new Event("change"));
-    });
-  });
-
-  // Add to cart
-  grid.querySelectorAll("[data-add]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-add");
-      const it = ITEMS.find(x=>x.id===id);
-      const mode = selectedMode[id] || "unite";
-      const unitPrice = mode==="dc" ? priceDC(it) : priceUnite(it);
-      const qty = Math.max(1, Math.floor(+grid.querySelector(`[data-qty="${id}"]`).value||1));
-      const modeLabel = mode==="dc" ? labelDC(it) : labelUnite(it);
-      const key = `${id}|${mode}`;
-
-      const existing = cart.get(key);
-      if (existing) existing.qty += qty;
-      else cart.set(key, { id, name: it.name, mode, modeLabel, unitPrice, qty });
-
-      syncCount();
-    });
-  });
-}
-
-function syncCount() {
-  let n = 0;
-  for (const [,l] of cart) n += l.qty;
-  itemsCountEl.textContent = n;
-}
-
-function renderCart() {
-  if (!cart.size) {
-    cartLines.innerHTML = `<div class="muted">Panier vide.</div>`;
-    totalDollarEl.textContent = "0";
-    return;
-  }
-  let total = 0;
-  const lines = [];
-  for (const [key, line] of cart.entries()) {
-    const lt = line.unitPrice * line.qty;
-    total += lt;
-    lines.push(`
-      <div class="line">
-        <div>
-          <b>${line.name}</b>
-          <div class="small muted">${line.unitPrice} $ • ${line.modeLabel} • x${line.qty}</div>
-        </div>
-        <div class="qtyBtns">
-          <button class="mini" data-dec="${key}">−</button>
-          <button class="mini" data-inc="${key}">+</button>
-        </div>
-      </div>`);
-  }
-  cartLines.innerHTML = lines.join("");
-  totalDollarEl.textContent = String(total);
-
-  cartLines.querySelectorAll("[data-inc]").forEach(b => {
-    b.addEventListener("click", () => { cart.get(b.getAttribute("data-inc")).qty+=1; syncCount(); renderCart(); });
-  });
-  cartLines.querySelectorAll("[data-dec]").forEach(b => {
-    b.addEventListener("click", () => {
-      const key = b.getAttribute("data-dec");
-      const line = cart.get(key);
-      line.qty -= 1;
-      if (line.qty<=0) cart.delete(key);
-      syncCount(); renderCart();
-    });
-  });
-}
-
-function showMsg(text, type) {
-  msgEl.textContent = text;
-  msgEl.className = "small "+(type==="err"?"err":type==="ok"?"ok":"muted");
-}
-
-async function sendOrder() {
-  const username = $("username").value.trim();
-  const discordPseudo = $("discordPseudo").value.trim();
-  const note = $("note").value || "";
-  if (!username) return showMsg("❌ Mets ton pseudo en jeu.", "err");
-  if (!discordPseudo) return showMsg("❌ Mets ton pseudo Discord.", "err");
-  if (!cart.size) return showMsg("❌ Ton panier est vide.", "err");
-
-  let total = 0;
-  const items = [];
-  for (const [, line] of cart.entries()) {
-    const lt = line.unitPrice * line.qty;
-    total += lt;
-    items.push({ id: line.id, name: line.name, mode: line.modeLabel, qty: line.qty, price: line.unitPrice, total: lt });
-  }
-
-  showMsg("⏳ Création du ticket Discord...", "muted");
-
-  const res = await fetch("/api/create-ticket", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pseudo: username, discordPseudo, note, items, totalDollar: total })
-  });
-
-  const data = await res.json().catch(()=>({}));
-  if (!res.ok || !data.ok)
-    return showMsg("❌ Erreur: "+(data.error||"impossible de créer le ticket"), "err");
-
-  cart.clear(); syncCount(); renderCart();
-  const id = data.orderId || data.channelId || "?";
-  const name = data.channelName ? ` (${data.channelName})` : "";
-  showMsg("✅ Ticket créé ! ID: "+id+name, "ok");
-}
-
-// Events
-$("openCart").addEventListener("click", openCart);
-$("closeCart").addEventListener("click", closeCart);
-overlay.addEventListener("click", closeCart);
-$("orderBtn").addEventListener("click", openCart);
-$("send").addEventListener("click", sendOrder);
-$("toTop").addEventListener("click", ()=>window.scrollTo({top:0,behavior:"smooth"}));
-$("reset").addEventListener("click", ()=>{
-  qEl.value=""; minEl.value=0; maxEl.value=50000;
-  activeCat="Tous"; minLabel.textContent="0"; maxLabel.textContent="50000";
-  renderCats(); renderProducts();
-});
-minEl.addEventListener("input", ()=>{
-  if(+minEl.value>+maxEl.value) minEl.value=maxEl.value;
-  minLabel.textContent=minEl.value; renderProducts();
-});
-maxEl.addEventListener("input", ()=>{
-  if(+maxEl.value<+minEl.value) maxEl.value=minEl.value;
-  maxLabel.textContent=maxEl.value; renderProducts();
-});
-qEl.addEventListener("input", renderProducts);
-
-(async()=>{
   try {
-    await loadItemsFromJsonBin();
+    await loadItems(srv);
     renderCats(); renderProducts(); syncCount();
   } catch(e) {
     console.error(e);
-    $("empty").style.display="block";
-    $("empty").textContent="Impossible de charger les articles (JSONBin).";
+    grid.innerHTML="";
+    empty.style.display="block";
+    empty.textContent="Impossible de charger le catalogue du serveur "+srv.name+".";
   }
-})();
+}
+
+function showSkeletons(n) {
+  grid.innerHTML = Array.from({length:n}, () =>
+    `<div class="skeleton-card"><div class="skeleton-inner">
+      <div class="skel skel-thumb"></div>
+      <div class="skel skel-name"></div>
+      <div class="skel skel-desc"></div>
+      <div class="skel skel-desc2"></div>
+      <div class="skel skel-btn"></div>
+    </div></div>`
+  ).join("");
+}
+
+function showSelector() {
+  const spGrid = document.getElementById("spGrid");
+  spGrid.innerHTML = SERVERS.map(s =>
+    `<div class="sp-card${currentServer&&currentServer.id===s.id?' active':''}" data-spid="${s.id}" style="--sc:${s.color}; border-color:${s.color}22">
+      <div class="sp-dot" style="background:${s.color}; box-shadow:0 0 10px ${s.color}66"></div>
+      <div class="sp-name">${s.name}</div>
+    </div>`
+  ).join("");
+  spGrid.querySelectorAll(".sp-card").forEach(c => c.addEventListener("click", () => {
+    closeServerPicker();
+    selectServer(c.dataset.spid);
+  }));
+  document.getElementById("serverPickerBackdrop").classList.add("open");
+}
+
+function closeServerPicker() {
+  document.getElementById("serverPickerBackdrop").classList.remove("open");
+}
+document.getElementById("serverPickerBackdrop").addEventListener("click", function(e) {
+  if (e.target === this) closeServerPicker();
+});
+
+async function loadItems(srv) {
+  const res = await fetch(`https://api.jsonbin.io/v3/b/${srv.binId}/latest`, {
+    headers:{"Content-Type":"application/json","X-Access-Key":srv.accessKey}
+  });
+  if(!res.ok) throw new Error("JSONBin error: "+res.status);
+  const data = await res.json();
+  if(!data.record||!Array.isArray(data.record.items)) throw new Error("Format invalide");
+  ITEMS = data.record.items.filter(i=>i.hidden!==true);
+}
+
+function hasDC(it){return it.dcEnabled!==false&&it.prices?.["dc"]!==undefined}
+function hasUnite(it){return it.uniteEnabled!==false&&it.prices?.["$"]!==undefined}
+function priceDC(it){return it.prices?.["dc"]??0}
+function priceUnite(it){return it.prices?.["$"]??0}
+function labelDC(it){return it.dcLabel||"DC"}
+function labelUnite(it){return it.uniteLabel||"Unité"}
+function uniqCats(){return["Tous",...new Set(ITEMS.map(i=>i.cat))]}
+
+function renderCats(){
+  catsEl.innerHTML=uniqCats().map(c=>`<div class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</div>`).join("");
+  catsEl.querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{activeCat=ch.dataset.cat;renderCats();renderProducts();}));
+}
+
+function renderProducts(){
+  const q=qEl.value.trim().toLowerCase(),mn=+minEl.value,mx=+maxEl.value;
+  const filtered=ITEMS.filter(it=>{
+    if(q&&!(it.name.toLowerCase().includes(q)||(it.desc||"").toLowerCase().includes(q)))return false;
+    if(activeCat!=="Tous"&&it.cat!==activeCat)return false;
+    if(!hasUnite(it)&&!hasDC(it))return true;
+    return(hasUnite(it)&&priceUnite(it)>=mn&&priceUnite(it)<=mx)||(hasDC(it)&&priceDC(it)>=mn&&priceDC(it)<=mx);
+  });
+  shownEl.textContent=filtered.length;
+  if(!filtered.length){grid.innerHTML="";empty.style.display="block";return;}
+  empty.style.display="none";
+
+  // Use DocumentFragment for perf
+  const frag = document.createDocumentFragment();
+  filtered.forEach((it, idx) => {
+    if(!selectedMode[it.id])selectedMode[it.id]=hasUnite(it)?"unite":"dc";
+    const mode=selectedMode[it.id];
+    const curPrice=mode==="dc"?priceDC(it):priceUnite(it);
+    const div = document.createElement("div");
+    div.className = "card";
+    // Staggered animation delay (max 500ms spread across visible cards)
+    const delay = Math.min(idx * 45, 500);
+    div.style.animationDelay = delay + "ms";
+    div.innerHTML = `<div class="cardInner">
+      <div class="thumb">${it.img
+        ? `<img src="${it.img}" alt="${it.name}" loading="lazy" decoding="async" width="96" height="96" onerror="this.outerHTML='<div class=\\'fallback\\'>Image manquante</div>'">`
+        : `<div class="fallback">Aucune image</div>`
+      }</div>
+      <div class="cardTop"><div class="name">${it.name}</div><div class="tag">${it.tag}</div></div>
+      <div class="desc">${it.desc}</div>
+      ${(hasDC(it)||hasUnite(it))?`<div class="modeToggle">
+        <button type="button" class="${mode==='unite'?'active':''}" ${!hasUnite(it)?'disabled':''} data-mode-btn="${it.id}" data-mode="unite">📦 ${labelUnite(it)}</button>
+        <button type="button" class="${mode==='dc'?'active':''}" ${!hasDC(it)?'disabled':''} data-mode-btn="${it.id}" data-mode="dc">🗄️ ${labelDC(it)}</button>
+      </div>`:''}
+      <div class="modeRow">
+        <div class="qtyPicker">
+          <button type="button" class="qtyBtn" data-qdec="${it.id}">−</button>
+          <input class="qtyInput" type="number" min="1" step="1" value="1" data-qty="${it.id}">
+          <button type="button" class="qtyBtn" data-qinc="${it.id}">+</button>
+        </div>
+        <div class="pricePreview" id="price-${it.id}">${curPrice} $</div>
+      </div>
+      <button class="add" data-add="${it.id}">+ Ajouter au panier</button>
+    </div>`;
+    frag.appendChild(div);
+  });
+
+  grid.innerHTML = "";
+  grid.appendChild(frag);
+
+  // Event delegation on grid (single listener instead of N listeners)
+  grid.addEventListener("click", gridClickHandler, {once:false});
+  grid.addEventListener("input", gridInputHandler, {once:false});
+}
+
+// ── Event delegation for grid ──────────────────────────────────────────────────
+function gridClickHandler(e) {
+  const target = e.target;
+
+  // Mode toggle
+  const modeBtn = target.closest("[data-mode-btn]");
+  if(modeBtn) {
+    const id=modeBtn.getAttribute("data-mode-btn"),nm=modeBtn.getAttribute("data-mode"),it=ITEMS.find(x=>x.id===id);
+    selectedMode[id]=nm;
+    grid.querySelectorAll(`[data-mode-btn="${id}"]`).forEach(b=>b.classList.toggle("active",b.getAttribute("data-mode")===nm));
+    const qty=Math.max(1,+grid.querySelector(`[data-qty="${id}"]`)?.value||1);
+    const el=$("price-"+id);
+    if(el)el.textContent=`${(nm==="dc"?priceDC(it):priceUnite(it))*qty} $`;
+    return;
+  }
+
+  // Qty dec
+  const qdec = target.closest("[data-qdec]");
+  if(qdec) {
+    const id=qdec.getAttribute("data-qdec"),inp=grid.querySelector(`[data-qty="${id}"]`);
+    inp.value=String(Math.max(1,(+inp.value||1)-1));
+    inp.dispatchEvent(new Event("input")); return;
+  }
+
+  // Qty inc
+  const qinc = target.closest("[data-qinc]");
+  if(qinc) {
+    const id=qinc.getAttribute("data-qinc"),inp=grid.querySelector(`[data-qty="${id}"]`);
+    inp.value=String((+inp.value||1)+1);
+    inp.dispatchEvent(new Event("input")); return;
+  }
+
+  // Add to cart
+  const addBtn = target.closest("[data-add]");
+  if(addBtn) {
+    const id=addBtn.getAttribute("data-add"),it=ITEMS.find(x=>x.id===id),mode=selectedMode[id]||"unite";
+    const unitPrice=mode==="dc"?priceDC(it):priceUnite(it);
+    const qty=Math.max(1,Math.floor(+grid.querySelector(`[data-qty="${id}"]`).value||1));
+    const key=`${id}|${mode}`,ex=cart.get(key);
+    if(ex)ex.qty+=qty;else cart.set(key,{id,name:it.name,mode,modeLabel:mode==="dc"?labelDC(it):labelUnite(it),unitPrice,qty});
+    syncCount();
+    // Flash animation on button
+    addBtn.classList.remove("added");
+    void addBtn.offsetWidth; // reflow to restart animation
+    addBtn.classList.add("added");
+    addBtn.addEventListener("animationend", ()=>addBtn.classList.remove("added"), {once:true});
+    return;
+  }
+}
+
+function gridInputHandler(e) {
+  const inp = e.target.closest("[data-qty]");
+  if(!inp) return;
+  const id=inp.getAttribute("data-qty"),it=ITEMS.find(x=>x.id===id);
+  let v=Math.max(1,Math.floor(+inp.value||1));inp.value=v;
+  const m=selectedMode[id]||"unite";
+  $("price-"+id).textContent=`${(m==="dc"?priceDC(it):priceUnite(it))*v} $`;
+}
+
+function syncCount(){
+  let n=0;
+  for(const[,l]of cart)n+=l.qty;
+  itemsCountEl.textContent=n;
+  const fab=document.getElementById("cartFabCount");
+  if(fab){
+    const prev = +fab.textContent;
+    fab.textContent=n;
+    if(n > prev){
+      const fabEl=document.getElementById("cartFab");
+      fabEl.classList.remove("bounce");
+      void fabEl.offsetWidth;
+      fabEl.classList.add("bounce");
+    }
+  }
+}
+
+function renderCart(){
+  if(!cart.size){cartLines.innerHTML=`<div class="muted">Panier vide.</div>`;totalDollarEl.textContent="0";return;}
+  let total=0;const lines=[];
+  for(const[key,line]of cart.entries()){
+    const lt=line.unitPrice*line.qty;total+=lt;
+    lines.push(`<div class="line"><div><b>${line.name}</b><div class="small muted">${line.unitPrice} $ • ${line.modeLabel} • x${line.qty}</div></div><div class="qtyBtns"><button class="mini" data-dec="${key}">−</button><button class="mini" data-inc="${key}">+</button></div></div>`);
+  }
+  cartLines.innerHTML=lines.join("");totalDollarEl.textContent=String(total);
+  cartLines.querySelectorAll("[data-inc]").forEach(b=>b.addEventListener("click",()=>{cart.get(b.getAttribute("data-inc")).qty+=1;syncCount();renderCart();}));
+  cartLines.querySelectorAll("[data-dec]").forEach(b=>b.addEventListener("click",()=>{const k=b.getAttribute("data-dec"),l=cart.get(k);l.qty-=1;if(l.qty<=0)cart.delete(k);syncCount();renderCart();}));
+}
+
+function showMsg(t,type){msgEl.textContent=t;msgEl.className="small "+(type==="err"?"err":type==="ok"?"ok":"muted");}
+
+async function sendOrder(){
+  const username=$("username").value.trim(),discordPseudo=$("discordPseudo").value.trim(),note=$("note").value||"";
+  if(!username)return showMsg("❌ Mets ton pseudo en jeu.","err");
+  if(!discordPseudo)return showMsg("❌ Mets ton pseudo Discord.","err");
+  if(!cart.size)return showMsg("❌ Ton panier est vide.","err");
+  let total=0;const items=[];
+  for(const[,line]of cart.entries()){const lt=line.unitPrice*line.qty;total+=lt;items.push({id:line.id,name:line.name,mode:line.modeLabel,qty:line.qty,price:line.unitPrice,total:lt});}
+  showMsg("⏳ Création du ticket Discord...","muted");
+  const res=await fetch("/api/create-ticket",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pseudo:username,discordPseudo,note,items,totalDollar:total,server:currentServer?.id||"unknown"})});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok||!data.ok)return showMsg("❌ Erreur: "+(data.error||"impossible de créer le ticket"),"err");
+  cart.clear();syncCount();renderCart();
+  showMsg("✅ Ticket créé ! ID: "+(data.orderId||"?")+(data.channelName?` (${data.channelName})`:""),"ok");
+}
+
+function openCart(){overlay.style.display="block";drawer.style.transform="translateX(0)";renderCart();}
+function closeCart(){overlay.style.display="none";drawer.style.transform="translateX(100%)";}
+
+$("openCart").addEventListener("click",openCart);
+$("closeCart").addEventListener("click",closeCart);
+overlay.addEventListener("click",closeCart);
+$("orderBtn").addEventListener("click",openCart);
+$("send").addEventListener("click",sendOrder);
+$("toTop").addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
+$("reset").addEventListener("click",()=>{qEl.value="";minEl.value=0;maxEl.value=50000;activeCat="Tous";minLabel.textContent="0";maxLabel.textContent="50000";renderCats();renderProducts();});
+
+// Debounce search input (avoid re-rendering on every keystroke)
+qEl.addEventListener("input", debounce(renderProducts, 180));
+
+minEl.addEventListener("input",()=>{if(+minEl.value>+maxEl.value)minEl.value=maxEl.value;minLabel.textContent=minEl.value;renderProducts();});
+maxEl.addEventListener("input",()=>{if(+maxEl.value<+minEl.value)maxEl.value=minEl.value;maxLabel.textContent=maxEl.value;renderProducts();});
+
+document.getElementById("cartFab").addEventListener("click",openCart);
+document.getElementById("filterToggleBtn").addEventListener("click",()=>{
+  const col=document.getElementById("filterCollapsible");
+  const arrow=document.getElementById("filterArrow");
+  const open=col.classList.toggle("open");
+  arrow.textContent=open?"▲":"▼";
+});
 </script>
 </body>
 </html>

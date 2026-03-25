@@ -4,248 +4,185 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SiZium Admin</title>
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-
   <style>
-    :root{
-      --bg:#070A12;
-      --panel:#111520;
-      --border:rgba(255,255,255,.12);
-      --text:#EAF0FF;
-      --muted:rgba(234,240,255,.6);
-      --primary:#35F2FF;
-      --danger:#FB7185;
-      --success:#34d399;
-      --warning:#FBBF24;
-      --r:12px;
-    }
-
+    :root{--bg:#070A12;--panel:#111520;--border:rgba(255,255,255,.12);--text:#EAF0FF;--muted:rgba(234,240,255,.6);--primary:#35F2FF;--danger:#FB7185;--success:#34d399;--warning:#FBBF24;--r:12px;}
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:"Space Grotesk", sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      display:flex; flex-direction:column;
-      min-height:100vh;
-    }
-
+    body{margin:0;font-family:"Space Grotesk",sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;}
     .hidden{display:none !important}
-    .btn{
-      padding:10px 16px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,.1);
-      background:rgba(255,255,255,.05);
-      color:var(--text);
-      font-weight:600; cursor:pointer;
-      font-family:inherit;
-      transition:.2s;
-    }
+    .btn{padding:10px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--text);font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;}
     .btn:hover{background:rgba(255,255,255,.1)}
-    .btn.primary{
-      background: linear-gradient(135deg, rgba(53,242,255,.2), rgba(167,139,250,.2));
-      border-color:rgba(53,242,255,.3);
-      color:#fff;
-    }
-    .btn.danger{background:rgba(251,113,133,.15); color:var(--danger); border-color:var(--danger)}
-    
-    input, textarea, select{
-      width:100%;
-      background:rgba(0,0,0,.3);
-      border:1px solid var(--border);
-      padding:10px;
-      border-radius:8px;
-      color:white;
-      font-family:inherit;
-      outline:none;
-    }
+    .btn.primary{background:linear-gradient(135deg,rgba(53,242,255,.2),rgba(167,139,250,.2));border-color:rgba(53,242,255,.3);color:#fff;}
+    .btn.danger{background:rgba(251,113,133,.15);color:var(--danger);border-color:var(--danger)}
+    input,textarea,select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);padding:10px;border-radius:8px;color:white;font-family:inherit;outline:none;}
     input:focus{border-color:var(--primary)}
-    input[type="checkbox"] { width:auto; }
-
-    #login-view{
-      flex:1; display:flex; align-items:center; justify-content:center;
-      padding:20px;
-    }
-    .login-box{
-      width:100%; max-width:400px;
-      background:var(--panel);
-      padding:30px;
-      border-radius:16px;
-      border:1px solid var(--border);
-      text-align:center;
-    }
+    input[type="checkbox"]{width:auto;}
+    #login-view{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .login-box{width:100%;max-width:400px;background:var(--panel);padding:30px;border-radius:16px;border:1px solid var(--border);text-align:center;}
     .login-box h1{margin-top:0}
-    .login-box form{display:flex; flex-direction:column; gap:15px; margin-top:20px}
-
-    .forgot-link {
-      background: none;
-      border: none;
-      color: var(--primary);
-      margin-top: 15px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.9rem;
-      text-decoration: underline;
-      opacity: 0.8;
-      transition: 0.2s;
-    }
-    .forgot-link:hover { opacity: 1; }
-
-    #admin-view{
-      max-width:1200px; margin:0 auto; width:100%; padding:20px;
-    }
-    
-    header{
-      display:flex; justify-content:space-between; align-items:center;
-      margin-bottom:30px; padding-bottom:20px;
-      border-bottom:1px solid var(--border);
-    }
-    .brand{font-size:1.5rem; font-weight:700; color:var(--primary)}
-
-    .toolbar{
-      display:flex; justify-content:space-between; align-items:center;
-      margin-bottom:20px;
-      gap:10px; flex-wrap:wrap;
-    }
-    
-    .items-list{ display:grid; gap:10px; }
-    .item-row{
-      display:grid;
-      grid-template-columns: 60px 2fr 1fr 1fr 160px;
-      align-items:center;
-      background:var(--panel);
-      padding:10px;
-      border-radius:8px;
-      border:1px solid var(--border);
-      gap:15px;
-      transition: opacity 0.3s;
-    }
-    .item-row.is-hidden {
-      opacity: 0.6;
-      border-style: dashed;
-    }
-    @media(max-width:700px){
-      .item-row{grid-template-columns: 60px 1fr; gap:10px;}
-      .item-row > *:nth-child(3), .item-row > *:nth-child(4){display:none}
-    }
-
-    .item-img{width:48px; height:48px; object-fit:contain; background:#000; border-radius:6px}
-    .item-info b{display:flex; align-items:center; gap:8px; font-size:1.05rem}
-    .item-info span{color:var(--muted); font-size:0.9rem}
-    .actions{display:flex; gap:8px; justify-content:flex-end}
-
-    .badge-hidden {
-      background: rgba(251,113,133,.15);
-      color: var(--danger);
-      border: 1px solid var(--danger);
-      font-size: 0.7rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .badge-mode {
-      font-size: 0.7rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 600;
-      border: 1px solid;
-    }
-    .badge-mode.dc   { color: var(--primary); border-color: var(--primary); background: rgba(53,242,255,.08); }
-    .badge-mode.unit { color: var(--success); border-color: var(--success); background: rgba(52,211,153,.08); }
-
-    .modal-overlay{
-      position:fixed; inset:0; background:rgba(0,0,0,.7);
-      backdrop-filter:blur(5px);
-      display:flex; align-items:center; justify-content:center;
-      z-index:100;
-    }
-    .modal{
-      background:#161b2c;
-      width:min(640px, 90vw);
-      max-height:90vh; overflow-y:auto;
-      padding:25px; border-radius:16px;
-      border:1px solid var(--border);
-      box-shadow:0 20px 50px rgba(0,0,0,.5);
-    }
-    .modal-title{margin-top:0; font-size:1.4rem}
-    .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:15px; margin:20px 0}
+    .login-box form{display:flex;flex-direction:column;gap:15px;margin-top:20px}
+    .forgot-link{background:none;border:none;color:var(--primary);margin-top:15px;cursor:pointer;font-family:inherit;font-size:0.9rem;text-decoration:underline;opacity:.8;transition:.2s;}
+    .forgot-link:hover{opacity:1}
+    #admin-view{max-width:1200px;margin:0 auto;width:100%;padding:20px;}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+    .brand{font-size:1.5rem;font-weight:700;color:var(--primary)}
+    .server-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:0.85rem;font-weight:600;}
+    .spill-dot{width:12px;height:12px;border-radius:50%;}
+    .srv-dropdown-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;position:relative;user-select:none;}
+    .srv-dropdown{position:absolute;top:calc(100% + 8px);left:0;background:#161b2c;border:1px solid var(--border);border-radius:10px;padding:6px;min-width:160px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+    .srv-dropdown.hidden{display:none;}
+    .srv-option{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:.85rem;font-weight:600;transition:.15s;}
+    .srv-option:hover{background:rgba(255,255,255,.08);}
+    .srv-option.active{background:rgba(255,255,255,.12);}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
+    .items-list{display:grid;gap:10px;}
+    .item-row{display:grid;grid-template-columns:60px 2fr 1fr 1fr 160px;align-items:center;background:var(--panel);padding:10px;border-radius:8px;border:1px solid var(--border);gap:15px;transition:opacity .3s;}
+    .item-row.is-hidden{opacity:.6;border-style:dashed;}
+    .item-img{width:48px;height:48px;object-fit:contain;background:#000;border-radius:6px}
+    .item-info b{display:flex;align-items:center;gap:8px;font-size:1.05rem}
+    .item-info span{color:var(--muted);font-size:0.9rem}
+    .actions{display:flex;gap:8px;justify-content:flex-end}
+    .badge-hidden{background:rgba(251,113,133,.15);color:var(--danger);border:1px solid var(--danger);font-size:.7rem;padding:2px 6px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+    .badge-mode{font-size:.7rem;padding:2px 6px;border-radius:4px;font-weight:600;border:1px solid;}
+    .badge-mode.dc{color:var(--primary);border-color:var(--primary);background:rgba(53,242,255,.08);}
+    .badge-mode.unit{color:var(--success);border-color:var(--success);background:rgba(52,211,153,.08);}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(5px);display:flex;align-items:flex-end;justify-content:center;z-index:100;}
+    .modal{background:#161b2c;width:min(640px,100vw);max-height:92vh;overflow-y:auto;padding:25px;border-radius:16px 16px 0 0;border:1px solid var(--border);box-shadow:0 20px 50px rgba(0,0,0,.5);}
+    .modal-title{margin-top:0;font-size:1.4rem}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0}
     .full{grid-column:1/-1}
-    .label{display:block; margin-bottom:6px; font-size:0.9rem; color:var(--muted)}
+    .label{display:block;margin-bottom:6px;font-size:.9rem;color:var(--muted)}
+    .price-section{grid-column:1/-1;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+    .price-section-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border);font-weight:700;}
+    .price-section-body{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .price-section-body.disabled-section{opacity:.4;pointer-events:none;}
+    .toggle-wrap{display:flex;align-items:center;gap:8px;}
+    .toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+    .toggle input{opacity:0;width:0;height:0;}
+    .toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,.15);border-radius:20px;cursor:pointer;transition:.2s;}
+    .toggle-slider:before{content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s;}
+    .toggle input:checked+.toggle-slider{background:var(--primary);}
+    .toggle input:checked+.toggle-slider:before{transform:translateX(16px);}
+    .toast{position:fixed;bottom:20px;right:20px;background:var(--panel);border:1px solid var(--border);padding:12px 20px;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:slideIn .3s ease;z-index:999;}
+    @keyframes slideIn{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
 
-    /* Section prix dans la modale */
-    .price-section {
-      grid-column: 1/-1;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .price-section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      background: rgba(255,255,255,.04);
-      border-bottom: 1px solid var(--border);
-      font-weight: 700;
-    }
-    .price-section-body {
-      padding: 14px 16px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .price-section-body.disabled-section {
-      opacity: 0.4;
-      pointer-events: none;
+    /* Access denied screen */
+    #access-denied{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px;text-align:center;}
+    #access-denied .icon{font-size:3rem;}
+    #access-denied h2{margin:0;color:var(--danger);}
+    #access-denied p{color:var(--muted);max-width:400px;}
+
+    /* ===== MOBILE IMPROVEMENTS ===== */
+
+    @media (max-width: 768px) {
+      #admin-view { padding: 14px; }
+
+      /* Header compact */
+      header {
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      header > div:first-child {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .brand { font-size: 1.2rem; }
+
+      /* Toolbar */
+      .toolbar { margin-bottom: 12px; }
+      .toolbar h2 { font-size: 1rem; }
+      .btn { padding: 8px 12px; font-size: .9rem; }
+
+      /* Item rows : layout mobile card-style */
+      .item-row {
+        grid-template-columns: 48px 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 8px;
+        padding: 12px;
+      }
+      /* Image reste en col 1 */
+      .item-row .item-img {
+        grid-row: 1 / 3;
+        grid-column: 1;
+        align-self: start;
+      }
+      /* Nom en col 2 row 1 */
+      .item-row .item-info:first-of-type {
+        grid-column: 2;
+        grid-row: 1;
+      }
+      /* Cat + prix : côte à côte sur row 2 */
+      .item-row .item-info:nth-of-type(2),
+      .item-row .item-info:nth-of-type(3) {
+        display: block !important;
+        grid-column: 2;
+        grid-row: 2;
+      }
+      .item-row .item-info:nth-of-type(3) {
+        display: flex !important;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+      }
+      /* Actions sur toute la largeur */
+      .item-row .actions {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        justify-content: flex-start;
+        gap: 6px;
+      }
+      .actions .btn {
+        flex: 1;
+        text-align: center;
+        padding: 10px 8px;
+        font-size: .9rem;
+      }
+
+      /* Modal : bottom sheet fullscreen */
+      .modal-overlay {
+        align-items: flex-end;
+      }
+      .modal {
+        width: 100vw;
+        max-height: 90vh;
+        border-radius: 20px 20px 0 0;
+        padding: 20px 16px;
+      }
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .full { grid-column: 1; }
+      .price-section-body {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      /* Toast position */
+      .toast {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        text-align: center;
+        font-size: .9rem;
+      }
+
+      /* Server pill dropdown align right */
+      .srv-dropdown {
+        left: auto;
+        right: 0;
+      }
     }
 
-    /* Toggle switch */
-    .toggle-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    @media (max-width: 400px) {
+      .login-box { padding: 20px 16px; }
+      .modal { padding: 16px 12px; }
     }
-    .toggle {
-      position: relative;
-      width: 36px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-    .toggle input { opacity:0; width:0; height:0; }
-    .toggle-slider {
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,.15);
-      border-radius: 20px;
-      cursor: pointer;
-      transition: .2s;
-    }
-    .toggle-slider:before {
-      content: "";
-      position: absolute;
-      width: 14px; height: 14px;
-      left: 3px; top: 3px;
-      background: white;
-      border-radius: 50%;
-      transition: .2s;
-    }
-    .toggle input:checked + .toggle-slider { background: var(--primary); }
-    .toggle input:checked + .toggle-slider:before { transform: translateX(16px); }
-
-    .toast{
-      position:fixed; bottom:20px; right:20px;
-      background:var(--panel); border:1px solid var(--border);
-      padding:12px 20px; border-radius:8px;
-      box-shadow:0 10px 30px rgba(0,0,0,.5);
-      animation: slideIn .3s ease;
-      z-index: 999;
-    }
-    @keyframes slideIn{ from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1}}
   </style>
 </head>
 <body>
@@ -260,40 +197,25 @@
         <button type="submit" class="btn primary">Se connecter</button>
       </form>
       <button type="button" class="forgot-link" id="forgotPwdBtn">Mot de passe oublié ?</button>
-      <p id="loginError" style="color:var(--danger); display:none; margin-top:10px"></p>
+      <p id="loginError" style="color:var(--danger);display:none;margin-top:10px"></p>
     </div>
+  </div>
+
+  <div id="access-denied" class="hidden">
+    <div class="icon">🚫</div>
+    <h2>Accès refusé</h2>
+    <p>Ton compte n'est pas associé à un serveur. Contacte un administrateur principal.</p>
+    <button class="btn" id="adLogoutBtn">Se déconnecter</button>
   </div>
 
   <div id="admin-view" class="hidden">
     <header>
-      <div class="brand">SiZium <span style="color:#fff; font-weight:400">Manager</span></div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="brand">SiZium <span style="color:#fff;font-weight:400">Manager</span></div>
+        <div class="server-pill" id="serverPill"></div>
+      </div>
       <button class="btn" id="logoutBtn">Déconnexion</button>
     </header>
-
-    <!--<div style="
-      background: linear-gradient(135deg, rgba(53,242,255,.07), rgba(167,139,250,.07));
-      border: 1px solid rgba(53,242,255,.2);
-      border-left: 3px solid var(--primary);
-      border-radius: 12px;
-      padding: 16px 22px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    ">
-      <div style="font-size: 1.4rem; flex-shrink:0;">📬</div>
-      <div>
-        <div style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary); margin-bottom: 4px;">
-          Communication interne — Administrateurs
-        </div>
-        <div style="font-size: 0.95rem; color: var(--text); line-height: 1.5;">
-          Merci à tous les administrateurs de m'envoyer un e-mail à l'adresse suivante&nbsp;:
-          <a href="mailto:mathis@flixium.site" style="color: var(--primary); font-weight: 600; text-decoration: none; margin-left: 4px;">
-            mathis@flixium.site
-          </a>
-        </div>
-      </div>
-    </div>-->
 
     <div class="toolbar">
       <h2 style="margin:0">Produits (<span id="count">0</span>)</h2>
@@ -301,7 +223,7 @@
     </div>
 
     <div class="items-list" id="list">
-      <div style="padding:40px; text-align:center; color:var(--muted)">Chargement...</div>
+      <div style="padding:40px;text-align:center;color:var(--muted)">Chargement...</div>
     </div>
   </div>
 
@@ -311,89 +233,47 @@
       <form id="productForm">
         <input type="hidden" id="inpId">
         <div class="form-grid">
-          <div class="full">
-            <label class="label">Nom du produit</label>
-            <input type="text" id="inpName" required>
-          </div>
+          <div class="full"><label class="label">Nom du produit</label><input type="text" id="inpName" required></div>
           <div>
             <label class="label">Catégorie</label>
             <input type="text" id="inpCat" list="catList" required>
-            <datalist id="catList">
-              <option value="Outils"></option>
-              <option value="Armes"></option>
-              <option value="Ressources"></option>
-              <option value="Armures"></option>
-            </datalist>
+            <datalist id="catList"><option value="Outils"></option><option value="Armes"></option><option value="Ressources"></option><option value="Armures"></option></datalist>
           </div>
-          <div>
-            <label class="label">Tag (Badge)</label>
-            <input type="text" id="inpTag">
-          </div>
-          <div class="full">
-            <label class="label">Description</label>
-            <textarea id="inpDesc" rows="2"></textarea>
-          </div>
-          <div class="full">
-            <label class="label">Image URL</label>
-            <input type="url" id="inpImg">
-          </div>
-
-          <!-- === SECTION PRIX UNITÉ === -->
+          <div><label class="label">Tag (Badge)</label><input type="text" id="inpTag"></div>
+          <div class="full"><label class="label">Description</label><textarea id="inpDesc" rows="2"></textarea></div>
+          <div class="full"><label class="label">Image URL</label><input type="url" id="inpImg"></div>
           <div class="price-section full">
             <div class="price-section-header">
               <span>📦 Achat à l'unité</span>
               <label class="toggle-wrap" style="cursor:pointer">
-                <label class="toggle">
-                  <input type="checkbox" id="inpUniteEnabled" checked>
-                  <span class="toggle-slider"></span>
-                </label>
-                <span style="font-size:0.85rem; color:var(--muted)" id="uniteToggleLabel">Activé</span>
+                <label class="toggle"><input type="checkbox" id="inpUniteEnabled" checked><span class="toggle-slider"></span></label>
+                <span style="font-size:.85rem;color:var(--muted)" id="uniteToggleLabel">Activé</span>
               </label>
             </div>
             <div class="price-section-body" id="unitePriceBody">
-              <div>
-                <label class="label">Prix unitaire ($)</label>
-                <input type="number" id="inpPriceUnite" min="0" step="0.01" value="0">
-              </div>
-              <div>
-                <label class="label">Label bouton (optionnel)</label>
-                <input type="text" id="inpUniteLabel" placeholder="Unité">
-              </div>
+              <div><label class="label">Prix unitaire ($)</label><input type="number" id="inpPriceUnite" min="0" step="0.01" value="0"></div>
+              <div><label class="label">Label bouton (optionnel)</label><input type="text" id="inpUniteLabel" placeholder="Unité"></div>
             </div>
           </div>
-
-          <!-- === SECTION PRIX DC === -->
           <div class="price-section full">
             <div class="price-section-header">
               <span>🗄️ Double Coffre (DC)</span>
               <label class="toggle-wrap" style="cursor:pointer">
-                <label class="toggle">
-                  <input type="checkbox" id="inpDCEnabled">
-                  <span class="toggle-slider"></span>
-                </label>
-                <span style="font-size:0.85rem; color:var(--muted)" id="dcToggleLabel">Désactivé</span>
+                <label class="toggle"><input type="checkbox" id="inpDCEnabled"><span class="toggle-slider"></span></label>
+                <span style="font-size:.85rem;color:var(--muted)" id="dcToggleLabel">Désactivé</span>
               </label>
             </div>
             <div class="price-section-body disabled-section" id="dcPriceBody">
-              <div>
-                <label class="label">Prix DC ($)</label>
-                <input type="number" id="inpPriceDC" min="0" step="0.01" value="0">
-              </div>
-              <div>
-                <label class="label">Label bouton (optionnel)</label>
-                <input type="text" id="inpDCLabel" placeholder="DC">
-              </div>
+              <div><label class="label">Prix DC ($)</label><input type="number" id="inpPriceDC" min="0" step="0.01" value="0"></div>
+              <div><label class="label">Label bouton (optionnel)</label><input type="text" id="inpDCLabel" placeholder="DC"></div>
             </div>
           </div>
-
-          <!-- Brouillon -->
-          <div class="full" style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.05); padding:12px; border-radius:8px; border:1px solid var(--border); margin-top:4px;">
-            <input type="checkbox" id="inpHidden" style="width:20px; height:20px; cursor:pointer;">
-            <label for="inpHidden" style="cursor:pointer; font-weight:600; color:var(--warning); margin:0;">Masquer ce produit aux acheteurs (Brouillon)</label>
+          <div class="full" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);padding:12px;border-radius:8px;border:1px solid var(--border);margin-top:4px;">
+            <input type="checkbox" id="inpHidden" style="width:20px;height:20px;cursor:pointer;">
+            <label for="inpHidden" style="cursor:pointer;font-weight:600;color:var(--warning);margin:0;">Masquer ce produit aux acheteurs (Brouillon)</label>
           </div>
         </div>
-
-        <div style="display:flex; justify-content:flex-end; gap:10px">
+        <div style="display:flex;justify-content:flex-end;gap:10px">
           <button type="button" class="btn" id="closeModal">Annuler</button>
           <button type="submit" class="btn primary">Sauvegarder</button>
         </div>
@@ -414,268 +294,269 @@
       appId: "1:519974328064:web:20f77d9932b401aa8a45e5"
     };
 
+    // ============================================================
+    // MAP EMAIL → SERVEUR
+    // Associe chaque vendeur à son serveur (et donc son JSONBin)
+    // Ajouter un vendeur :
+    //   "email@exemple.com": "coral"             → accès à 1 serveur
+    //   "email@exemple.com": ["coral","blue"]    → accès à plusieurs serveurs
+    // ============================================================
+    const EMAIL_TO_SERVER = {
+      "issaw@sizium.fr": ["coral","blue","orange","yellow","white","black","cyan","lime","red","mocha","jade"],
+      "taymansromain0@gmail.com": ["coral","blue","orange","yellow","white","black","cyan","lime","red","mocha","jade"],
+    };
+
+    // Config serveurs (BIN_ID pour l'admin = master key via /api/jsonbin?server=X)
+    const SERVERS = {
+      coral:  { name:"Coral",  color:"#FF6B6B" },
+      blue:   { name:"Blue",   color:"#4A9EFF" },
+      orange: { name:"Orange", color:"#FF9500" },
+      yellow: { name:"Yellow", color:"#FFD60A" },
+      white:  { name:"White",  color:"#C8C8C8" },
+      black:  { name:"Black",  color:"#666666" },
+      cyan:   { name:"Cyan",   color:"#00D4D4" },
+      lime:   { name:"Lime",   color:"#7ED321" },
+      red:    { name:"Red",    color:"#FF3030" },
+      mocha:  { name:"Mocha",  color:"#C8845A" },
+      jade:   { name:"Jade",   color:"#00A86B" },
+    };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
     let items = [];
     let isEditMode = false;
+    let currentServerId = null;
+    let allowedServers = []; // liste des IDs accessibles pour cet utilisateur
 
     const loginView = document.getElementById("login-view");
     const adminView = document.getElementById("admin-view");
-    const listEl    = document.getElementById("list");
-    const modal     = document.getElementById("modal");
-
-    // Toggle DC/Unité dans la modale
+    const accessDenied = document.getElementById("access-denied");
+    const listEl = document.getElementById("list");
+    const modal = document.getElementById("modal");
     const inpUniteEnabled = document.getElementById("inpUniteEnabled");
-    const inpDCEnabled    = document.getElementById("inpDCEnabled");
-    const unitePriceBody  = document.getElementById("unitePriceBody");
-    const dcPriceBody     = document.getElementById("dcPriceBody");
+    const inpDCEnabled = document.getElementById("inpDCEnabled");
+    const unitePriceBody = document.getElementById("unitePriceBody");
+    const dcPriceBody = document.getElementById("dcPriceBody");
     const uniteToggleLabel = document.getElementById("uniteToggleLabel");
-    const dcToggleLabel    = document.getElementById("dcToggleLabel");
+    const dcToggleLabel = document.getElementById("dcToggleLabel");
 
-    inpUniteEnabled.addEventListener("change", () => {
-      unitePriceBody.classList.toggle("disabled-section", !inpUniteEnabled.checked);
-      uniteToggleLabel.textContent = inpUniteEnabled.checked ? "Activé" : "Désactivé";
-    });
-    inpDCEnabled.addEventListener("change", () => {
-      dcPriceBody.classList.toggle("disabled-section", !inpDCEnabled.checked);
-      dcToggleLabel.textContent = inpDCEnabled.checked ? "Activé" : "Désactivé";
-    });
+    inpUniteEnabled.addEventListener("change",()=>{unitePriceBody.classList.toggle("disabled-section",!inpUniteEnabled.checked);uniteToggleLabel.textContent=inpUniteEnabled.checked?"Activé":"Désactivé";});
+    inpDCEnabled.addEventListener("change",()=>{dcPriceBody.classList.toggle("disabled-section",!inpDCEnabled.checked);dcToggleLabel.textContent=inpDCEnabled.checked?"Activé":"Désactivé";});
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        const raw = EMAIL_TO_SERVER[user.email];
+        if (!raw) {
+          loginView.classList.add("hidden");
+          adminView.classList.add("hidden");
+          accessDenied.classList.remove("hidden");
+          return;
+        }
+        // Normalise en tableau
+        allowedServers = Array.isArray(raw) ? raw : [raw];
+
         loginView.classList.add("hidden");
+        accessDenied.classList.add("hidden");
         adminView.classList.remove("hidden");
-        loadData();
+
+        if (allowedServers.length === 1) {
+          // Accès direct à l'unique serveur
+          switchServer(allowedServers[0]);
+        } else {
+          // Plusieurs serveurs → affiche le sélecteur dans la pill
+          currentServerId = allowedServers[0];
+          renderServerPill();
+          loadData();
+        }
       } else {
         loginView.classList.remove("hidden");
         adminView.classList.add("hidden");
+        accessDenied.classList.add("hidden");
       }
     });
 
+    function switchServer(id) {
+      if (!allowedServers.includes(id)) return;
+      currentServerId = id;
+      items = [];
+      renderServerPill();
+      loadData();
+    }
+
+    function renderServerPill() {
+      const srv = SERVERS[currentServerId];
+      const pillEl = document.getElementById("serverPill");
+
+      if (allowedServers.length === 1) {
+        // Badge simple
+        pillEl.innerHTML =
+          `<div class="spill-dot" style="background:${srv.color};box-shadow:0 0 8px ${srv.color}88"></div>
+           Serveur <b style="color:${srv.color}">${srv.name}</b>`;
+      } else {
+        // Dropdown multi-serveurs
+        const options = allowedServers.map(sid => {
+          const s = SERVERS[sid];
+          return `<div class="srv-option ${sid===currentServerId?'active':''}" data-sid="${sid}">
+            <div class="spill-dot" style="background:${s.color};width:10px;height:10px;border-radius:50%;flex-shrink:0"></div>
+            ${s.name}
+          </div>`;
+        }).join("");
+
+        pillEl.innerHTML =
+          `<div class="srv-dropdown-wrap">
+            <div class="spill-dot" style="background:${srv.color};box-shadow:0 0 8px ${srv.color}88"></div>
+            <span>Serveur <b style="color:${srv.color}">${srv.name}</b></span>
+            <span style="margin-left:4px;opacity:.6;font-size:.8rem">▾</span>
+            <div class="srv-dropdown hidden">${options}</div>
+          </div>`;
+
+        // Toggle dropdown
+        pillEl.querySelector(".srv-dropdown-wrap").addEventListener("click", (e) => {
+          const dd = pillEl.querySelector(".srv-dropdown");
+          dd.classList.toggle("hidden");
+          e.stopPropagation();
+        });
+        document.addEventListener("click", () => {
+          pillEl.querySelector(".srv-dropdown")?.classList.add("hidden");
+        }, { once: true });
+
+        // Clic sur une option
+        pillEl.querySelectorAll(".srv-option").forEach(opt => {
+          opt.addEventListener("click", (e) => {
+            e.stopPropagation();
+            pillEl.querySelector(".srv-dropdown").classList.add("hidden");
+            switchServer(opt.dataset.sid);
+          });
+        });
+      }
+    }
+
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("email").value;
-      const pass  = document.getElementById("password").value;
       try {
-        await signInWithEmailAndPassword(auth, email, pass);
+        await signInWithEmailAndPassword(auth, document.getElementById("email").value, document.getElementById("password").value);
       } catch {
-        document.getElementById("loginError").textContent = "Identifiants invalides ou erreur de config.";
-        document.getElementById("loginError").style.display = "block";
+        const el = document.getElementById("loginError");
+        el.textContent="Identifiants invalides."; el.style.display="block";
       }
     });
 
     document.getElementById("forgotPwdBtn").addEventListener("click", async () => {
-      const email   = document.getElementById("email").value;
-      const errorEl = document.getElementById("loginError");
-      if (!email) {
-        errorEl.textContent = "Veuillez entrer votre adresse e-mail dans le champ ci-dessus.";
-        errorEl.style.display = "block";
-        return;
-      }
-      try {
-        await sendPasswordResetEmail(auth, email);
-        errorEl.style.display = "none";
-        showToast("Un lien de réinitialisation a été envoyé !", "success");
-      } catch {
-        errorEl.textContent = "Erreur : Compte introuvable ou e-mail invalide.";
-        errorEl.style.display = "block";
-      }
+      const email = document.getElementById("email").value;
+      const el = document.getElementById("loginError");
+      if(!email){el.textContent="Entrez votre email ci-dessus.";el.style.display="block";return;}
+      try{await sendPasswordResetEmail(auth,email);el.style.display="none";showToast("Lien de réinitialisation envoyé !","success");}
+      catch{el.textContent="Compte introuvable.";el.style.display="block";}
     });
 
-    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+    document.getElementById("logoutBtn").addEventListener("click",()=>signOut(auth));
+    document.getElementById("adLogoutBtn").addEventListener("click",()=>signOut(auth));
 
+    // ============================================================
+    // DATA — lit et écrit sur le bon JSONBin via /api/jsonbin?server=X
+    // ============================================================
     async function loadData() {
       showToast("Chargement des produits...");
       try {
-        const res = await fetch("/api/jsonbin", { method: "GET" });
-        if (!res.ok) throw new Error("Réponse API invalide");
+        const res = await fetch(`/api/jsonbin?server=${currentServerId}`,{method:"GET"});
+        if(!res.ok) throw new Error("Réponse API invalide");
         const data = await res.json();
         items = data.record?.items || [];
         render();
-        showToast("Données chargées !", "success");
+        showToast("Données chargées !","success");
       } catch(e) {
         console.error(e);
-        showToast("Erreur lors du chargement", "err");
+        showToast("Erreur lors du chargement","err");
       }
     }
 
     async function saveData() {
       showToast("Enregistrement...");
       try {
-        const res = await fetch("/api/jsonbin", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items })
+        const res = await fetch(`/api/jsonbin?server=${currentServerId}`,{
+          method:"PUT",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({items})
         });
-        if (!res.ok) throw new Error("Impossible de sauvegarder via l'API");
-        showToast("Boutique mise à jour !", "success");
+        if(!res.ok) throw new Error("Impossible de sauvegarder");
+        showToast("Boutique mise à jour !","success");
       } catch(e) {
         console.error(e);
-        showToast("Erreur sauvegarde", "err");
-        alert("Échec de la sauvegarde : " + e.message);
+        showToast("Erreur sauvegarde","err");
+        alert("Échec de la sauvegarde : "+e.message);
       }
     }
 
     function render() {
-      document.getElementById("count").textContent = items.length;
-      if (!items.length) {
-        listEl.innerHTML = '<div style="padding:40px; text-align:center; color:var(--muted)">La liste est vide.</div>';
-        return;
-      }
-
-      listEl.innerHTML = items.map(item => {
-        const isHidden = item.hidden === true;
-        const hiddenClass  = isHidden ? 'is-hidden' : '';
-        const badgeHTML    = isHidden ? `<span class="badge-hidden">Caché</span>` : '';
-        const toggleIcon   = isHidden ? '🙈' : '👁️';
-        const toggleTitle  = isHidden ? 'Rendre visible' : 'Cacher le produit';
-
-        const dcAvail    = item.dcEnabled !== false    && item.prices?.["dc"] !== undefined;
-        const uniteAvail = item.uniteEnabled !== false && item.prices?.["$"]  !== undefined;
-
-        const modesBadges = [
-          uniteAvail ? `<span class="badge-mode unit">Unité ${item.prices["$"]} $</span>` : '',
-          dcAvail    ? `<span class="badge-mode dc">DC ${item.prices["dc"]} $</span>`     : ''
-        ].filter(Boolean).join(" ");
-
-        return `
-        <div class="item-row ${hiddenClass}">
-          <img src="${item.img||''}" class="item-img"
-               onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzIyMiIvPjwvc3ZnPg=='">
-          <div class="item-info">
-            <b>${escapeHtml(item.name||"")} ${badgeHTML}</b>
-            <span>${escapeHtml(item.tag||'Sans tag')}</span>
-          </div>
-          <div class="item-info"><span>${escapeHtml(item.cat||"")}</span></div>
-          <div class="item-info" style="display:flex; flex-direction:column; gap:4px;">
-            ${modesBadges || '<span style="color:var(--muted);font-size:0.85rem">Aucun prix actif</span>'}
+      document.getElementById("count").textContent=items.length;
+      if(!items.length){listEl.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">La liste est vide.</div>';return;}
+      const nb='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzIyMiIvPjwvc3ZnPg==';
+      listEl.innerHTML=items.map(item=>{
+        const isH=item.hidden===true;
+        const dcA=item.dcEnabled!==false&&item.prices?.["dc"]!==undefined;
+        const unA=item.uniteEnabled!==false&&item.prices?.["$"]!==undefined;
+        return`<div class="item-row ${isH?'is-hidden':''}">
+          <img src="${item.img||''}" class="item-img" onerror="this.src='${nb}'">
+          <div class="item-info"><b>${escH(item.name||"")} ${isH?'<span class="badge-hidden">Caché</span>':''}</b><span>${escH(item.tag||'Sans tag')}</span></div>
+          <div class="item-info"><span>${escH(item.cat||"")}</span></div>
+          <div class="item-info" style="display:flex;flex-direction:column;gap:4px">
+            ${unA?`<span class="badge-mode unit">Unité ${item.prices["$"]} $</span>`:''}
+            ${dcA?`<span class="badge-mode dc">DC ${item.prices["dc"]} $</span>`:''}
+            ${!unA&&!dcA?'<span style="color:var(--muted);font-size:.85rem">Aucun prix actif</span>':''}
           </div>
           <div class="actions">
-            <button class="btn" onclick="toggleVisibility('${String(item.id)}')" title="${toggleTitle}">${toggleIcon}</button>
-            <button class="btn" onclick="editItem('${String(item.id)}')">✏️</button>
-            <button class="btn danger" onclick="deleteItem('${String(item.id)}')">🗑️</button>
+            <button class="btn" onclick="toggleVis('${item.id}')" title="${isH?'Rendre visible':'Cacher'}">${isH?'🙈':'👁️'}</button>
+            <button class="btn" onclick="editItem('${item.id}')">✏️</button>
+            <button class="btn danger" onclick="delItem('${item.id}')">🗑️</button>
           </div>
         </div>`;
       }).join("");
     }
 
-    window.toggleVisibility = async (id) => {
-      const item = items.find(i => i.id === id);
-      if (!item) return;
-      item.hidden = !item.hidden;
-      render();
-      await saveData();
-    };
+    window.toggleVis=async(id)=>{const it=items.find(i=>i.id===id);if(!it)return;it.hidden=!it.hidden;render();await saveData();};
+    window.delItem=async(id)=>{if(!confirm("Supprimer définitivement ?"))return;items=items.filter(i=>i.id!==id);render();await saveData();};
+    window.editItem=(id)=>{const it=items.find(i=>i.id===id);if(!it)return;fillForm(it);isEditMode=true;document.getElementById("modalTitle").textContent="Modifier le produit";modal.classList.remove("hidden");};
 
-    window.deleteItem = async (id) => {
-      if (!confirm("Supprimer définitivement ce produit ?")) return;
-      items = items.filter(i => i.id !== id);
-      render();
-      await saveData();
-    };
+    document.getElementById("addBtn").addEventListener("click",()=>{fillForm({});isEditMode=false;document.getElementById("modalTitle").textContent="Ajouter un produit";document.getElementById("inpId").value="item_"+Date.now();modal.classList.remove("hidden");});
 
-    window.editItem = (id) => {
-      const item = items.find(i => i.id === id);
-      if (!item) return;
-      fillForm(item);
-      isEditMode = true;
-      document.getElementById("modalTitle").textContent = "Modifier le produit";
-      modal.classList.remove("hidden");
-    };
-
-    document.getElementById("addBtn").addEventListener("click", () => {
-      fillForm({});
-      isEditMode = false;
-      document.getElementById("modalTitle").textContent = "Ajouter un produit";
-      document.getElementById("inpId").value = "item_" + Date.now();
-      modal.classList.remove("hidden");
-    });
-
-    document.getElementById("productForm").addEventListener("submit", async (e) => {
+    document.getElementById("productForm").addEventListener("submit",async(e)=>{
       e.preventDefault();
-
-      const uniteEnabled = document.getElementById("inpUniteEnabled").checked;
-      const dcEnabled    = document.getElementById("inpDCEnabled").checked;
-
-      const prices = {};
-      if (uniteEnabled) prices["$"]  = Number(document.getElementById("inpPriceUnite").value);
-      if (dcEnabled)    prices["dc"] = Number(document.getElementById("inpPriceDC").value);
-
-      const newItem = {
-        id:           document.getElementById("inpId").value,
-        name:         document.getElementById("inpName").value,
-        cat:          document.getElementById("inpCat").value,
-        tag:          document.getElementById("inpTag").value,
-        desc:         document.getElementById("inpDesc").value,
-        img:          document.getElementById("inpImg").value,
-        hidden:       document.getElementById("inpHidden").checked,
-        uniteEnabled: uniteEnabled,
-        dcEnabled:    dcEnabled,
-        uniteLabel:   document.getElementById("inpUniteLabel").value || "Unité",
-        dcLabel:      document.getElementById("inpDCLabel").value    || "DC",
-        prices
-      };
-
-      if (isEditMode) {
-        const idx = items.findIndex(i => i.id === newItem.id);
-        if (idx !== -1) items[idx] = newItem;
-      } else {
-        items.push(newItem);
-      }
-
-      modal.classList.add("hidden");
-      render();
-      await saveData();
+      const unE=document.getElementById("inpUniteEnabled").checked,dcE=document.getElementById("inpDCEnabled").checked;
+      const prices={};
+      if(unE)prices["$"]=Number(document.getElementById("inpPriceUnite").value);
+      if(dcE)prices["dc"]=Number(document.getElementById("inpPriceDC").value);
+      const ni={id:document.getElementById("inpId").value,name:document.getElementById("inpName").value,cat:document.getElementById("inpCat").value,tag:document.getElementById("inpTag").value,desc:document.getElementById("inpDesc").value,img:document.getElementById("inpImg").value,hidden:document.getElementById("inpHidden").checked,uniteEnabled:unE,dcEnabled:dcE,uniteLabel:document.getElementById("inpUniteLabel").value||"Unité",dcLabel:document.getElementById("inpDCLabel").value||"DC",prices};
+      if(isEditMode){const idx=items.findIndex(i=>i.id===ni.id);if(idx!==-1)items[idx]=ni;}else{items.push(ni);}
+      modal.classList.add("hidden");render();await saveData();
     });
 
-    document.getElementById("closeModal").addEventListener("click", () => modal.classList.add("hidden"));
+    document.getElementById("closeModal").addEventListener("click",()=>modal.classList.add("hidden"));
 
-    function fillForm(d) {
-      document.getElementById("inpId").value   = d.id   || "";
-      document.getElementById("inpName").value = d.name || "";
-      document.getElementById("inpCat").value  = d.cat  || "";
-      document.getElementById("inpTag").value  = d.tag  || "";
-      document.getElementById("inpDesc").value = d.desc || "";
-      document.getElementById("inpImg").value  = d.img  || "";
-      document.getElementById("inpHidden").checked = d.hidden || false;
-
-      // Unité
-      const uniteOn = d.uniteEnabled !== false && d.prices?.["$"] !== undefined
-        ? d.uniteEnabled !== false
-        : (d.prices?.["$"] !== undefined ? true : true); // par défaut activé pour nouveau produit
-      const uniteEnabledVal = d.id ? (d.uniteEnabled !== false) : true;
-      inpUniteEnabled.checked = uniteEnabledVal;
-      unitePriceBody.classList.toggle("disabled-section", !uniteEnabledVal);
-      uniteToggleLabel.textContent = uniteEnabledVal ? "Activé" : "Désactivé";
-      document.getElementById("inpPriceUnite").value  = d.prices?.["$"]  ?? 0;
-      document.getElementById("inpUniteLabel").value  = d.uniteLabel || "";
-
-      // DC
-      const dcEnabledVal = d.id ? (d.dcEnabled === true || (d.dcEnabled !== false && d.prices?.["dc"] !== undefined)) : false;
-      inpDCEnabled.checked = dcEnabledVal;
-      dcPriceBody.classList.toggle("disabled-section", !dcEnabledVal);
-      dcToggleLabel.textContent = dcEnabledVal ? "Activé" : "Désactivé";
-      document.getElementById("inpPriceDC").value  = d.prices?.["dc"] ?? 0;
-      document.getElementById("inpDCLabel").value  = d.dcLabel || "";
+    function fillForm(d){
+      document.getElementById("inpId").value=d.id||"";
+      document.getElementById("inpName").value=d.name||"";
+      document.getElementById("inpCat").value=d.cat||"";
+      document.getElementById("inpTag").value=d.tag||"";
+      document.getElementById("inpDesc").value=d.desc||"";
+      document.getElementById("inpImg").value=d.img||"";
+      document.getElementById("inpHidden").checked=d.hidden||false;
+      const uE=d.id?(d.uniteEnabled!==false):true;
+      inpUniteEnabled.checked=uE;unitePriceBody.classList.toggle("disabled-section",!uE);uniteToggleLabel.textContent=uE?"Activé":"Désactivé";
+      document.getElementById("inpPriceUnite").value=d.prices?.["$"]??0;document.getElementById("inpUniteLabel").value=d.uniteLabel||"";
+      const dE=d.id?(d.dcEnabled===true||(d.dcEnabled!==false&&d.prices?.["dc"]!==undefined)):false;
+      inpDCEnabled.checked=dE;dcPriceBody.classList.toggle("disabled-section",!dE);dcToggleLabel.textContent=dE?"Activé":"Désactivé";
+      document.getElementById("inpPriceDC").value=d.prices?.["dc"]??0;document.getElementById("inpDCLabel").value=d.dcLabel||"";
     }
 
-    function showToast(msg, type="info") {
-      const el = document.createElement("div");
-      el.className = "toast";
-      el.textContent = msg;
-      if (type==="success") el.style.borderLeft = "4px solid var(--success)";
-      if (type==="err")     el.style.borderLeft = "4px solid var(--danger)";
-      document.body.appendChild(el);
-      setTimeout(()=>el.remove(), 3000);
+    function showToast(msg,type="info"){
+      const el=document.createElement("div");el.className="toast";el.textContent=msg;
+      if(type==="success")el.style.borderLeft="4px solid var(--success)";
+      if(type==="err")el.style.borderLeft="4px solid var(--danger)";
+      document.body.appendChild(el);setTimeout(()=>el.remove(),3000);
     }
 
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&","&amp;").replaceAll("<","&lt;")
-        .replaceAll(">","&gt;").replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
+    function escH(str){return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
   </script>
 </body>
 </html>
