@@ -12,10 +12,17 @@ const client = new Client({
 // ─── Rôle Discord par serveur de la boutique ──────────────────────────────────
 // Remplis les IDs dans ton .env :  LIME_ROLE_ID, MOCHA_ROLE_ID, RED_ROLE_ID, BLACK_ROLE_ID
 const SERVER_ROLES = {
-  lime:  process.env.LIME_ROLE_ID  || null,
-  mocha: process.env.MOCHA_ROLE_ID || null,
-  red:   process.env.RED_ROLE_ID   || null,
+  coral:  process.env.CORAL_ROLE_ID  || null,
+  blue: process.env.BLUE_ROLE_ID || null,
+  orange:   process.env.ORANGE_ROLE_ID   || null,
+  yellow: process.env.YELLOW_ROLE_ID || null,
+  white: process.env.WHITE_ROLE_ID || null,
   black: process.env.BLACK_ROLE_ID || null,
+  cyan: process.env.CYAN_ROLE_ID || null,
+  lime: process.env.LIME_ROLE_ID || null,
+  red: process.env.RED_ROLE_ID || null,
+  mocha: process.env.MOCHA_ROLE_ID || null,
+  jade: process.env.JADE_ROLE_ID || null,
 };
 
 let ready = false;
