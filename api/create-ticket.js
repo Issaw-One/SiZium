@@ -118,6 +118,7 @@ export default async function handler(req, res) {
     const serverId     = String(server || "").toLowerCase();
     const serverLabel  = serverId ? serverId.charAt(0).toUpperCase() + serverId.slice(1) : "Inconnu";
     const serverRoleId = SERVER_ROLES[serverId] || null;
+    const VENDOR_ROLE_ID  = process.env.VENDOR_ROLE_ID || null; // Rôle vendeur référant
 
     // ── Résoudre le membre client ─────────────────────────────────────────────
     let clientId = extractDiscordId(discordPseudo);
@@ -237,11 +238,12 @@ export default async function handler(req, res) {
     } else if (!discordPseudo) {
       addInfo = `\n⚠️ **Aucun Discord fourni**`;
     }
-
-    // Ping le rôle du serveur si dispo, sinon fallback staff
-    const pingLine = serverRoleId
-      ? `<@&${serverRoleId}>`
-      : `<@&${staffRole.id}>`;
+    // Ping rôle du serveur + vendeur référant (toujours pingué)
+    const pings = [];
+    if (serverRoleId) pings.push(`<@&${serverRoleId}>`);
+    if (VENDOR_ROLE_ID) pings.push(`<@&${VENDOR_ROLE_ID}>`);
+    if (pings.length === 0) pings.push(`<@&${staffRole.id}>`);
+    const pingLine = pings.join(" ");
 
     await channel.send({
       content:
