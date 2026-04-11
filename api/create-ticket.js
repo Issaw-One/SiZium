@@ -9,8 +9,14 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
-const ROLE_PING_1 = "1324035976510701608";
-const ROLE_PING_2 = "1324036332133290045";
+// ─── Rôle Discord par serveur de la boutique ──────────────────────────────────
+// Remplis les IDs dans ton .env :  LIME_ROLE_ID, MOCHA_ROLE_ID, RED_ROLE_ID, BLACK_ROLE_ID
+const SERVER_ROLES = {
+  lime:  process.env.LIME_ROLE_ID  || null,
+  mocha: process.env.MOCHA_ROLE_ID || null,
+  red:   process.env.RED_ROLE_ID   || null,
+  black: process.env.BLACK_ROLE_ID || null,
+};
 
 let ready = false;
 
@@ -23,15 +29,14 @@ async function initBot() {
   ready = true;
 }
 
-function safeChannelName(username) {
-  const base = String(username || "user").toLowerCase().trim();
-  const cleaned = base
+function safeChannelName(str) {
+  return String(str || "user")
+    .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9-_]/g, "-")
     .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-  return cleaned || "user";
+    .replace(/^-|-$/g, "") || "user";
 }
 
 function extractDiscordId(input = "") {
@@ -58,9 +63,8 @@ async function findMemberByUsername(guild, raw) {
     });
 
     if (exact.size === 1) return { member: exact.first(), reason: "unique-match" };
-    if (exact.size > 1) return { member: null, reason: "multi-match" };
+    if (exact.size > 1)  return { member: null, reason: "multi-match" };
     if (results.size === 1) return { member: results.first(), reason: "unique-match" };
-
     return { member: null, reason: "multi-match" };
   } catch {
     return { member: null, reason: "search-failed" };
@@ -81,6 +85,7 @@ export default async function handler(req, res) {
       items,
       totals,
       totalDollar,
+      server,        // ← envoyé par la boutique (lime / mocha / red / black)
     } = req.body || {};
 
     const displayName = username || pseudo || discordPseudo;
@@ -102,16 +107,12 @@ export default async function handler(req, res) {
     const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID);
     await guild.roles.fetch();
 
-    const staffRole = guild.roles.cache.get(process.env.DISCORD_STAFF_ROLE_ID);
-    if (!staffRole) {
-      return res.status(400).json({ ok: false, error: "Rôle staff introuvable" });
-    }
+    // ── Rôle du serveur boutique ──────────────────────────────────────────────
+    const serverId     = String(server || "").toLowerCase();
+    const serverLabel  = serverId ? serverId.charAt(0).toUpperCase() + serverId.slice(1) : "Inconnu";
+    const serverRoleId = SERVER_ROLES[serverId] || null;
 
-    const parentCategory = await guild.channels.fetch(process.env.DISCORD_CATEGORY_ID).catch(() => null);
-    if (!parentCategory) {
-      return res.status(400).json({ ok: false, error: "Catégorie introuvable" });
-    }
-
+    // ── Résoudre le membre client ─────────────────────────────────────────────
     let clientId = extractDiscordId(discordPseudo);
     let resolvedMember = null;
     let resolveReason = null;
@@ -119,26 +120,73 @@ export default async function handler(req, res) {
     if (!clientId && discordPseudo) {
       const found = await findMemberByUsername(guild, discordPseudo);
       resolvedMember = found.member;
-      resolveReason = found.reason;
+      resolveReason  = found.reason;
       if (resolvedMember) clientId = resolvedMember.id;
     }
 
+    // ── Récupérer les membres ayant le rôle du serveur ────────────────────────
+    let roleMemberOverwrites = [];
+    if (serverRoleId) {
+      try {
+        await guild.members.fetch(); // charge le cache complet
+        const membersWithRole = guild.members.cache.filter(m =>
+          m.roles.cache.has(serverRoleId)
+        );
+        roleMemberOverwrites = membersWithRole.map(m => ({
+          id: m.id,
+          allow: [
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages,
+            PermissionsBitField.Flags.ReadMessageHistory,
+            PermissionsBitField.Flags.AttachFiles,
+          ],
+        }));
+      } catch (e) {
+        console.warn(`[create-ticket] Impossible de charger les membres du rôle ${serverRoleId}:`, e.message);
+      }
+    }
+
+    // ── Permission overwrites ─────────────────────────────────────────────────
+    const staffRole = guild.roles.cache.get(process.env.DISCORD_STAFF_ROLE_ID);
+    if (!staffRole) {
+      return res.status(400).json({ ok: false, error: "Rôle staff introuvable" });
+    }
+
     const permissionOverwrites = [
-      {
-        id: guild.id,
-        deny: [PermissionsBitField.Flags.ViewChannel]
-      },
-      {
+      // Tout le monde : interdit
+      { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+    ];
+
+    // Rôle staff général (s'il est différent du rôle serveur)
+    if (staffRole.id !== serverRoleId) {
+      permissionOverwrites.push({
         id: staffRole.id,
         allow: [
           PermissionsBitField.Flags.ViewChannel,
           PermissionsBitField.Flags.SendMessages,
-          PermissionsBitField.Flags.ReadMessageHistory
-        ]
-      }
-    ];
+          PermissionsBitField.Flags.ReadMessageHistory,
+        ],
+      });
+    }
 
-    if (clientId) {
+    // Rôle du serveur boutique (ex: @Lime) → accès complet
+    if (serverRoleId) {
+      permissionOverwrites.push({
+        id: serverRoleId,
+        allow: [
+          PermissionsBitField.Flags.ViewChannel,
+          PermissionsBitField.Flags.SendMessages,
+          PermissionsBitField.Flags.ReadMessageHistory,
+          PermissionsBitField.Flags.AttachFiles,
+        ],
+      });
+    }
+
+    // Membres individuels du rôle serveur
+    permissionOverwrites.push(...roleMemberOverwrites);
+
+    // Le client acheteur (si pas déjà couvert par le rôle)
+    if (clientId && !roleMemberOverwrites.some(o => o.id === clientId)) {
       permissionOverwrites.push({
         id: clientId,
         allow: [
@@ -146,18 +194,24 @@ export default async function handler(req, res) {
           PermissionsBitField.Flags.SendMessages,
           PermissionsBitField.Flags.ReadMessageHistory,
           PermissionsBitField.Flags.AttachFiles,
-        ]
+        ],
       });
     }
 
+    // ── Créer le channel dans la catégorie unique ─────────────────────────────
+    const parentCategory = await guild.channels.fetch(process.env.DISCORD_CATEGORY_ID).catch(() => null);
+    if (!parentCategory) {
+      return res.status(400).json({ ok: false, error: "Catégorie introuvable" });
+    }
+
     const channel = await guild.channels.create({
-      name: `ticket-${safeChannelName(displayName)}-${Date.now().toString().slice(-5)}`,
+      name: `ticket-${serverId || "shop"}-${safeChannelName(displayName)}-${Date.now().toString().slice(-5)}`,
       type: ChannelType.GuildText,
-      parent: process.env.DISCORD_CATEGORY_ID,
-      permissionOverwrites
+      parent: process.env.DISCORD_CATEGORY_ID,   // ← une seule catégorie pour tous
+      permissionOverwrites,
     });
 
-    // Affichage des items avec le mode (DC / Unité)
+    // ── Message dans le ticket ────────────────────────────────────────────────
     const lines = items
       .map(it => {
         const modeTag = it.mode ? ` [${it.mode}]` : "";
@@ -177,10 +231,15 @@ export default async function handler(req, res) {
       addInfo = `\n⚠️ **Aucun Discord fourni**`;
     }
 
+    // Ping le rôle du serveur si dispo, sinon fallback staff
+    const pingLine = serverRoleId
+      ? `<@&${serverRoleId}>`
+      : `<@&${staffRole.id}>`;
+
     await channel.send({
       content:
-        `<@&${ROLE_PING_1}> <@&${ROLE_PING_2}>\n` +
-        `🧾 **Nouvelle commande**\n` +
+        `${pingLine}\n` +
+        `🧾 **Nouvelle commande** — Serveur **${serverLabel}**\n` +
         `👤 **Pseudo**: ${displayName}\n` +
         `💬 **Discord (saisi)**: ${discordPseudo || "?"}\n` +
         (resolvedMember ? `✅ **Discord (trouvé)**: <@${resolvedMember.id}>\n` : "") +
@@ -191,6 +250,7 @@ export default async function handler(req, res) {
     });
 
     return res.json({ ok: true, orderId: channel.id });
+
   } catch (err) {
     console.error("create-ticket error:", err);
     return res.status(500).json({ ok: false, error: err?.message || "Erreur serveur" });
