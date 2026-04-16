@@ -724,12 +724,23 @@
       }).join("");
 
       grid.querySelectorAll(".srv-checkbox-card").forEach(card => {
-        card.addEventListener("click", () => {
+        card.addEventListener("click", (e) => {
+          // Si on clique directement sur l'input, laisser le comportement par défaut
+          if (e.target.tagName === "INPUT") return;
+          
           const cb = card.querySelector("input");
-          cb.checked = !cb.checked;
-          card.classList.toggle("selected", cb.checked);
+          const newState = !cb.checked;
+          cb.checked = newState;
+          card.classList.toggle("selected", newState);
+          
+          // Feedback visuel
+          if (newState) {
+            card.style.transform = "scale(0.95)";
+            setTimeout(() => card.style.transform = "", 100);
+          }
         });
-        // Prevent double-toggle when clicking directly on checkbox
+        
+        // Empêcher le double-clic sur l'input
         card.querySelector("input").addEventListener("click", e => e.stopPropagation());
       });
     }
@@ -882,16 +893,16 @@
         // CREATE new user
         if (!email || !password) { showToast("Email et mot de passe requis","err"); return; }
         if (password.length < 6) { showToast("Mot de passe trop court (min 6 caractères)","err"); return; }
+        
+        // Vérifier qu'au moins un serveur est sélectionné
+        if (servers.length === 0) { showToast("Sélectionnez au moins un serveur","err"); return; }
+        
         try {
           // Crée le compte Firebase Auth
           const cred = await createUserWithEmailAndPassword(auth, email, password);
           const newUid = cred.user.uid;
-          // Réauthentifier n'est pas nécessaire car createUserWithEmailAndPassword
-          // connecte automatiquement le nouveau compte — on se reconnecte au compte admin
-          // NOTE: Cette opération connecte le nouvel utilisateur. On ne peut pas créer
-          // un compte Firebase Auth côté client sans changer le user courant.
-          // Solution recommandée : utiliser Firebase Admin SDK côté serveur.
-          // Pour l'instant on sauvegarde le doc Firestore et on notifie.
+          
+          // Sauvegarde les permissions dans Firestore
           const userData = {
             email, displayName: displayName || email.split("@")[0],
             servers, ...perms,
@@ -901,14 +912,16 @@
           allUsersCache.push({ uid: newUid, ...userData });
           renderUsers();
           userModal.classList.add("hidden");
-          showToast("Utilisateur créé ! ⚠️ Vous avez été déconnecté — reconnectez-vous.", "success");
-          // Firebase Auth a connecté le nouveau user → on déconnecte et renvoie vers login
+          showToast("Utilisateur créé avec succès ! ⚠️ Vous avez été déconnecté — reconnectez-vous.", "success");
+          
+          // Firebase Auth a connecté le nouvel utilisateur → on se déconnecte pour revenir au compte admin
           setTimeout(() => signOut(auth), 2000);
         } catch(e) {
           console.error(e);
           let msg = "Erreur création";
           if (e.code === "auth/email-already-in-use") msg = "Email déjà utilisé";
           if (e.code === "auth/invalid-email") msg = "Email invalide";
+          if (e.code === "auth/weak-password") msg = "Mot de passe trop faible";
           showToast(msg, "err");
         }
       }
