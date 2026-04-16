@@ -729,7 +729,7 @@
           if (e.target.tagName === "INPUT") return;
           
           const cb = card.querySelector("input");
-          const newState = !cb.checked;
+          const newState = !card.classList.contains("selected");
           cb.checked = newState;
           card.classList.toggle("selected", newState);
           
