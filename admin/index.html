@@ -746,7 +746,7 @@
     }
 
     function getSelectedServers() {
-      return [...document.querySelectorAll("#serversGrid input:checked")].map(cb => cb.value);
+      return [...document.querySelectorAll("#serversGrid .srv-checkbox-card.selected")].map(card => card.dataset.sid);
     }
 
     function getSelectedPerms() {
