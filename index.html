@@ -285,10 +285,10 @@ function makeCardEl(it, idx) {
 }
 
 // Emoji map pour les catégories
-const CAT_ICONS = {
-  "Armures":"🛡️","Armes":"⚔️","Potions":"🧪","Minerais":"⛏️","Outils":"🔧","Blocs":"🧱","Nourriture":"🍖","Enchantements":"✨"
-};
-function catIcon(cat){ return CAT_ICONS[cat]||"📦"; }
+//const CAT_ICONS = {
+  //"Armures":"🛡️","Armes":"⚔️","Potions":"🧪","Minerais":"⛏️","Outils":"🔧","Blocs":"🧱","Nourriture":"🍖","Enchantements":"✨"
+//};
+//function catIcon(cat){ return CAT_ICONS[cat]||"📦"; }
 
 function renderProducts(){
   const q=qEl.value.trim().toLowerCase(),mn=0,mx=Infinity;
@@ -330,7 +330,7 @@ function renderProducts(){
 
     const header = document.createElement("div");
     header.className = "cat-header";
-    header.innerHTML = `<span class="cat-icon">${catIcon(cat)}</span><span class="cat-label">${cat}</span><span class="cat-count">${items.length} article${items.length>1?'s':''}</span>`;
+    header.innerHTML = `<span class="cat-label">${cat}</span><span class="cat-count">${items.length} article${items.length>1?'s':''}</span>`;
     section.appendChild(header);
 
     // Grid for this category
