@@ -290,7 +290,7 @@
         <h2 style="margin:0">📋 Journal d'activité (<span id="logsCount">0</span>)</h2>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <input class="log-search" type="text" id="logSearch" placeholder="🔍 Rechercher...">
-          <!--<button class="btn danger" id="clearLogsBtn" title="Vider les logs (irréversible)">🗑️ Vider</button>-->
+          <button class="btn danger" id="clearLogsBtn" title="Vider les logs (irréversible)">🗑️ Vider</button>
         </div>
       </div>
       <div class="logs-stats" id="logsStats"></div>
@@ -1236,6 +1236,104 @@
       login: "🔐", drag: "↕️"
     };
 
+    const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1455289664868061234/n96UV0nr1Z5CLqjER4KeHtn1Q_FYDXGg0mUfu3Qbl4F3MG67Fbu9u5H26BT16WFKyC2l";
+
+    const DISCORD_COLORS = {
+      add: 0x34d399,         // vert
+      edit: 0x35F2FF,        // cyan
+      delete: 0xFB7185,      // rouge
+      hide: 0xFBBF24,        // jaune
+      show: 0xa78bfa,        // violet
+      drag: 0x60a5fa,        // bleu
+      user_create: 0x34d399, // vert
+      user_edit: 0x35F2FF,   // cyan
+      user_delete: 0xFB7185, // rouge
+      login: 0x6b7280,       // gris
+    };
+
+    const DISCORD_ICONS = {
+      add: "➕", edit: "✏️", delete: "🗑️", hide: "🙈", show: "👁️",
+      drag: "↕️", user_create: "👤", user_edit: "🔧", user_delete: "❌", login: "🔐"
+    };
+
+    async function sendDiscordLog(action, logEntry) {
+      try {
+        const srv = logEntry.server && SERVERS[logEntry.server];
+        const srvText = srv ? `**Serveur :** ${srv.name}` : "";
+        const icon = DISCORD_ICONS[action] || "📝";
+        const color = DISCORD_COLORS[action] || 0x888888;
+        const date = new Date(logEntry.ts);
+        const timeStr = date.toLocaleString("fr-FR");
+
+        let title = "";
+        let description = "";
+
+        switch(action) {
+          case "add":
+            title = `${icon} Produit ajouté`;
+            description = `**${logEntry.itemName || "?"}**\nCatégorie : ${logEntry.itemCat || "?"}\n${srvText}`;
+            break;
+          case "edit":
+            title = `${icon} Produit modifié`;
+            description = `**${logEntry.itemName || "?"}**\nCatégorie : ${logEntry.itemCat || "?"}\n${srvText}`;
+            break;
+          case "delete":
+            title = `${icon} Produit supprimé`;
+            description = `**${logEntry.itemName || "?"}**\nCatégorie : ${logEntry.itemCat || "?"}\n${srvText}`;
+            break;
+          case "hide":
+            title = `${icon} Produit masqué`;
+            description = `**${logEntry.itemName || "?"}**\n${srvText}`;
+            break;
+          case "show":
+            title = `${icon} Produit affiché`;
+            description = `**${logEntry.itemName || "?"}**\n${srvText}`;
+            break;
+          case "drag":
+            title = `${icon} Produit réordonné`;
+            description = `**${logEntry.itemName || "?"}**\nNouvelle catégorie : ${logEntry.newCat || "?"}\n${srvText}`;
+            break;
+          case "user_create":
+            title = `${icon} Utilisateur créé`;
+            description = `**${logEntry.targetName || "?"}**\nEmail : ${logEntry.targetEmail || "?"}`;
+            break;
+          case "user_edit":
+            title = `${icon} Utilisateur modifié`;
+            description = `**${logEntry.targetName || "?"}**\nEmail : ${logEntry.targetEmail || "?"}`;
+            break;
+          case "user_delete":
+            title = `${icon} Utilisateur supprimé`;
+            description = `Email : ${logEntry.targetEmail || "?"}`;
+            break;
+          case "login":
+            title = `${icon} Connexion au panel`;
+            description = srvText || "Panel Admin";
+            break;
+          default:
+            title = `📝 ${action}`;
+            description = srvText;
+        }
+
+        const embed = {
+          title,
+          description,
+          color,
+          footer: {
+            text: `👤 ${logEntry.actorName} (${logEntry.actorEmail}) • ${timeStr}`
+          },
+          timestamp: new Date(logEntry.ts).toISOString()
+        };
+
+        await fetch(DISCORD_WEBHOOK, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ embeds: [embed] })
+        });
+      } catch(e) {
+        console.warn("Discord webhook error", e);
+      }
+    }
+
     async function writeLog(action, details = {}) {
       if (!currentUserPerms) return;
       try {
@@ -1249,6 +1347,7 @@
           ...details
         };
         await addDoc(collection(db, "admin_logs"), logEntry);
+        sendDiscordLog(action, logEntry); // fire & forget
       } catch(e) {
         console.warn("writeLog error", e);
       }
