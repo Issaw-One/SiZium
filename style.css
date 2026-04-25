@@ -216,3 +216,149 @@ input[type="range"]{width:100%;accent-color:var(--cyan);cursor:pointer}
 .loader-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;animation:fadeIn .3s ease both}
 .loader-ring{width:36px;height:36px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--cyan);animation:spin .7s linear infinite}
 .loader-text{color:var(--muted);font-size:.9rem}
+
+/* ── Category sections ──────────────────────────────────────────────────── */
+.cat-sections-wrapper{display:flex;flex-direction:column;gap:20px;width:100%}
+.cat-section{
+  display:flex;flex-direction:column;gap:16px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:0 14px 40px rgba(0,0,0,.35);
+  padding:18px 20px 20px;
+}
+.cat-header{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  backdrop-filter:blur(6px);
+}
+.cat-icon{font-size:1.3rem;line-height:1}
+.cat-label{font-size:1.05rem;font-weight:700;color:#fff;letter-spacing:.01em;flex:1}
+.cat-count{font-size:.78rem;color:var(--muted);background:rgba(255,255,255,.07);border-radius:20px;padding:3px 10px;font-weight:600}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+@media(max-width:600px){
+  .cat-section{padding:12px 12px 14px}
+  .cat-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .cat-header{padding:8px 12px}
+  .cat-label{font-size:.95rem}
+}
+
+/* ── Discord button ──────────────────────────────────────────────────────── */
+.discord-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  background:#5865F2;color:#fff;border:none;
+  font-weight:700;text-decoration:none;
+}
+.discord-btn:hover{background:#4752C4;color:#fff;}
+
+/* ── Discord popup ───────────────────────────────────────────────────────── */
+.discord-popup-backdrop{
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+}
+.discord-popup-backdrop.open{opacity:1;pointer-events:all;}
+.discord-popup-modal{
+  width:90%;max-width:440px;
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.07);
+  transform:translateY(20px) scale(.96);
+  transition:transform .3s cubic-bezier(.22,1,.36,1);
+}
+.discord-popup-backdrop.open .discord-popup-modal{transform:translateY(0) scale(1);}
+
+/* Header band — Discord purple gradient */
+.discord-popup-header{
+  background:linear-gradient(135deg,#5865F2 0%,#3b4bc8 60%,#2d3aab 100%);
+  padding:36px 32px 28px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  position:relative;overflow:hidden;
+}
+.discord-popup-header::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 0%,rgba(255,255,255,.15) 0%,transparent 60%);
+  pointer-events:none;
+}
+.discord-popup-logo{
+  width:80px;height:80px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+}
+.discord-popup-logo img{object-fit:contain;display:block;}
+.discord-popup-badge{
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);
+  color:#fff;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  border-radius:20px;padding:4px 12px;
+}
+.discord-popup-badge-success{
+  background:rgba(34,197,94,.25);border-color:rgba(34,197,94,.5);color:#4ade80;
+}
+.discord-popup-success-check{
+  position:absolute;top:16px;right:16px;
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(34,197,94,.3);border:2px solid rgba(34,197,94,.6);
+  display:flex;align-items:center;justify-content:center;
+}
+.discord-popup-ticket-id{
+  font-size:.8rem;font-weight:700;color:#a5b4fc;
+  background:rgba(88,101,242,.15);border:1px solid rgba(88,101,242,.3);
+  border-radius:8px;padding:7px 14px;text-align:center;letter-spacing:.02em;
+}
+
+/* Body */
+.discord-popup-body{
+  background:#13161f;
+  padding:28px 28px 20px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.discord-popup-title{font-size:1.2rem;font-weight:800;color:#fff;margin:0;text-align:center;}
+.discord-popup-text{color:var(--muted);font-size:.875rem;line-height:1.6;margin:0;text-align:center;}
+.discord-popup-text b{color:rgba(255,255,255,.85);}
+
+/* Join button */
+.discord-popup-join-btn{
+  display:flex;align-items:center;gap:12px;
+  background:linear-gradient(135deg,#5865F2,#4752C4);
+  color:#fff;font-weight:700;font-size:.95rem;
+  border:none;border-radius:12px;padding:14px 20px;
+  text-decoration:none;cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+  box-shadow:0 6px 20px rgba(88,101,242,.4);
+  margin-top:4px;
+}
+.discord-popup-join-btn:hover{
+  filter:brightness(1.1);transform:translateY(-2px);
+  box-shadow:0 10px 28px rgba(88,101,242,.55);color:#fff;
+}
+.discord-popup-join-icon{
+  width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.discord-popup-join-btn span:not(.discord-popup-join-icon){flex:1;}
+.discord-popup-arrow{flex-shrink:0;opacity:.7;}
+
+/* Footer */
+.discord-popup-footer{
+  background:#0f1117;border-top:1px solid rgba(255,255,255,.07);
+  padding:16px 28px 20px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.discord-popup-confirm-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+  color:#fff;font-weight:600;font-size:.9rem;
+  border-radius:10px;padding:12px;cursor:pointer;
+  transition:background .18s,border-color .18s;
+}
+.discord-popup-confirm-btn:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);}
+.discord-popup-cancel-btn{
+  background:none;border:none;color:var(--muted);font-size:.82rem;
+  cursor:pointer;padding:4px;transition:color .15s;text-align:center;
+}
+.discord-popup-cancel-btn:hover{color:#fff;}
