@@ -696,7 +696,6 @@
 
       listEl.innerHTML = groupOrder.map(cat => {
         const catItems = groups[cat];
-        const icon = catIcon(cat);
         const rows = catItems.map(item => {
           const isH=item.hidden===true;
           const dcA=item.dcEnabled!==false&&item.prices?.["dc"]!==undefined;
