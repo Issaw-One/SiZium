@@ -145,6 +145,44 @@
     .section-label{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
 
     .confirm-modal{background:#161b2c;width:min(400px,100vw);padding:28px;border-radius:16px;border:1px solid var(--danger);box-shadow:0 20px 50px rgba(0,0,0,.5);text-align:center;}
+
+    /* ===== ACTIVITY LOGS ===== */
+    #logs-view{display:none;}
+    #logs-view.active{display:block;}
+    .logs-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
+    .logs-filters{display:flex;gap:8px;flex-wrap:wrap;}
+    .log-filter-btn{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--muted);font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;transition:.2s;}
+    .log-filter-btn:hover{background:rgba(255,255,255,.08);color:var(--text);}
+    .log-filter-btn.active{background:rgba(53,242,255,.1);border-color:rgba(53,242,255,.3);color:var(--primary);}
+    .logs-list{display:grid;gap:8px;}
+    .log-entry{display:flex;align-items:flex-start;gap:14px;background:var(--panel);padding:14px 16px;border-radius:10px;border:1px solid var(--border);border-left:3px solid transparent;transition:.2s;}
+    .log-entry:hover{border-color:rgba(255,255,255,.18);}
+    .log-entry.action-add{border-left-color:var(--success);}
+    .log-entry.action-edit{border-left-color:var(--primary);}
+    .log-entry.action-delete{border-left-color:var(--danger);}
+    .log-entry.action-hide{border-left-color:var(--warning);}
+    .log-entry.action-show{border-left-color:#a78bfa;}
+    .log-entry.action-user_create{border-left-color:var(--success);}
+    .log-entry.action-user_edit{border-left-color:var(--primary);}
+    .log-entry.action-user_delete{border-left-color:var(--danger);}
+    .log-entry.action-login{border-left-color:rgba(255,255,255,.2);}
+    .log-entry.action-drag{border-left-color:#60a5fa;}
+    .log-icon{font-size:1.4rem;flex-shrink:0;margin-top:1px;}
+    .log-body{flex:1;min-width:0;}
+    .log-body b{display:block;font-size:.9rem;margin-bottom:2px;}
+    .log-body .log-detail{font-size:.8rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .log-meta{text-align:right;flex-shrink:0;}
+    .log-meta .log-who{font-size:.78rem;font-weight:700;color:var(--primary);}
+    .log-meta .log-when{font-size:.72rem;color:var(--muted);margin-top:2px;}
+    .log-srv-badge{display:inline-block;font-size:.68rem;padding:1px 6px;border-radius:4px;font-weight:700;border:1px solid;margin-right:4px;}
+    .logs-empty{padding:60px 20px;text-align:center;color:var(--muted);}
+    .logs-load-more{text-align:center;margin-top:16px;}
+    .log-search{flex:1;min-width:180px;max-width:300px;padding:8px 12px;border-radius:8px;background:rgba(0,0,0,.3);border:1px solid var(--border);color:white;font-family:inherit;font-size:.85rem;}
+    .log-search:focus{border-color:var(--primary);outline:none;}
+    .logs-stats{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+    .log-stat-card{flex:1;min-width:100px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-align:center;}
+    .log-stat-card .stat-num{font-size:1.4rem;font-weight:700;color:var(--primary);}
+    .log-stat-card .stat-lbl{font-size:.75rem;color:var(--muted);margin-top:2px;}
     .confirm-modal p{color:var(--muted);margin:10px 0 24px;}
     .confirm-btns{display:flex;gap:10px;justify-content:center;}
 
@@ -220,6 +258,7 @@
     <div class="nav-tabs" id="navTabs">
       <button class="nav-tab active" id="tabProducts" onclick="switchTab('products')">📦 Produits</button>
       <button class="nav-tab hidden-tab" id="tabUsers" onclick="switchTab('users')">👥 Utilisateurs</button>
+      <button class="nav-tab hidden-tab" id="tabLogs" onclick="switchTab('logs')">📋 Logs</button>
     </div>
 
     <!-- Products section -->
@@ -245,7 +284,33 @@
     </div>
   </div>
 
-  <!-- Product Modal -->
+    <!-- Logs section (super admin only) -->
+    <div id="logs-view">
+      <div class="logs-toolbar">
+        <h2 style="margin:0">📋 Journal d'activité (<span id="logsCount">0</span>)</h2>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input class="log-search" type="text" id="logSearch" placeholder="🔍 Rechercher...">
+          <button class="btn danger" id="clearLogsBtn" title="Vider les logs (irréversible)">🗑️ Vider</button>
+        </div>
+      </div>
+      <div class="logs-stats" id="logsStats"></div>
+      <div class="logs-filters" id="logsFilters" style="margin-bottom:16px;">
+        <button class="log-filter-btn active" data-filter="all">Tout</button>
+        <button class="log-filter-btn" data-filter="add">➕ Ajouts</button>
+        <button class="log-filter-btn" data-filter="edit">✏️ Modifications</button>
+        <button class="log-filter-btn" data-filter="delete">🗑️ Suppressions</button>
+        <button class="log-filter-btn" data-filter="hide,show">👁️ Visibilité</button>
+        <button class="log-filter-btn" data-filter="user_create,user_edit,user_delete">👥 Utilisateurs</button>
+        <button class="log-filter-btn" data-filter="login">🔐 Connexions</button>
+        <button class="log-filter-btn" data-filter="drag">↕️ Réordonnement</button>
+      </div>
+      <div class="logs-list" id="logsList">
+        <div class="logs-empty">Chargement des logs...</div>
+      </div>
+      <div class="logs-load-more" id="logsLoadMore" style="display:none;">
+        <button class="btn" id="loadMoreLogsBtn">Charger plus de logs</button>
+      </div>
+    </div>
   <div id="modal" class="modal-overlay hidden">
     <div class="modal">
       <h3 class="modal-title" id="modalTitle">Éditer produit</h3>
@@ -382,7 +447,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, query, orderBy, limit, startAfter, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_wo3eyil5Nr8-FaogEGWthscJ3SeBmu8",
@@ -431,6 +496,13 @@
     let editingUserId = null; // uid en cours d'édition dans la modale user
     let pendingDeleteUid = null;
 
+    // Logs state
+    let logsCache = [];
+    let logsLastDoc = null;
+    let logsActiveFilter = "all";
+    let logsSearchTerm = "";
+    const LOGS_PAGE_SIZE = 30;
+
     const loginView  = document.getElementById("login-view");
     const adminView  = document.getElementById("admin-view");
     const accessDenied = document.getElementById("access-denied");
@@ -474,10 +546,14 @@
         // Affiche l'onglet utilisateurs si super admin
         if (perms.isSuperAdmin) {
           document.getElementById("tabUsers").classList.remove("hidden-tab");
+          document.getElementById("tabLogs").classList.remove("hidden-tab");
         }
 
         // Applique droits sur les boutons produits
         applyProductPerms();
+
+        // Log de connexion
+        writeLog("login");
 
         if (allowedServers.length === 1) {
           switchServer(allowedServers[0]);
@@ -555,10 +631,14 @@
     window.switchTab = function(tab) {
       document.getElementById("tabProducts").classList.toggle("active", tab==="products");
       document.getElementById("tabUsers").classList.toggle("active", tab==="users");
+      document.getElementById("tabLogs").classList.toggle("active", tab==="logs");
       document.getElementById("products-view").style.display = tab==="products" ? "" : "none";
       const uv = document.getElementById("users-view");
       uv.style.display = tab==="users" ? "block" : "none";
+      const lv = document.getElementById("logs-view");
+      lv.style.display = tab==="logs" ? "block" : "none";
       if (tab==="users") loadUsers();
+      if (tab==="logs") loadLogs(true);
     };
 
     // ============================================================
@@ -840,6 +920,7 @@
       const lastOfCat = [...items].reverse().findIndex(i=>(i.cat||"Sans catégorie")===newCat);
       const insertAt = lastOfCat===-1 ? items.length : items.length - lastOfCat;
       items.splice(insertAt, 0, srcItem);
+      writeLog("drag",{itemId:srcItem.id,itemName:srcItem.name,newCat:srcItem.cat});
       render();
       saveData();
       showToast(`Déplacé vers "${newCat}" ✓`,"success");
@@ -854,12 +935,13 @@
       const targetItem = items[tgtIdx > srcIdx ? tgtIdx-1 : tgtIdx];
       if(targetItem) moved.cat = targetItem.cat;
       items.splice(tgtIdx > srcIdx ? tgtIdx-1 : tgtIdx, 0, moved);
+      writeLog("drag",{itemId:moved.id,itemName:moved.name,newCat:moved.cat});
       render();
       saveData();
     }
 
-    window.toggleVis=async(id)=>{ if(!canDo("canHide")){showToast("Permission refusée","err");return;} const it=items.find(i=>i.id===id);if(!it)return;it.hidden=!it.hidden;render();await saveData();};
-    window.delItem=async(id)=>{ if(!canDo("canDelete")){showToast("Permission refusée","err");return;} if(!confirm("Supprimer définitivement ?"))return;items=items.filter(i=>i.id!==id);render();await saveData();};
+    window.toggleVis=async(id)=>{ if(!canDo("canHide")){showToast("Permission refusée","err");return;} const it=items.find(i=>i.id===id);if(!it)return;it.hidden=!it.hidden;render();await saveData();writeLog(it.hidden?"hide":"show",{itemId:id,itemName:it.name,itemCat:it.cat});};
+    window.delItem=async(id)=>{ if(!canDo("canDelete")){showToast("Permission refusée","err");return;} if(!confirm("Supprimer définitivement ?"))return;const it=items.find(i=>i.id===id);writeLog("delete",{itemId:id,itemName:it?.name,itemCat:it?.cat});items=items.filter(i=>i.id!==id);render();await saveData();};
     window.editItem=(id)=>{ if(!canDo("canEdit")){showToast("Permission refusée","err");return;} const it=items.find(i=>i.id===id);if(!it)return;fillForm(it);isEditMode=true;document.getElementById("modalTitle").textContent="Modifier le produit";modal.classList.remove("hidden");};
 
     document.getElementById("addBtn").addEventListener("click",()=>{
@@ -874,7 +956,7 @@
       if(unE)prices["$"]=Number(document.getElementById("inpPriceUnite").value);
       if(dcE)prices["dc"]=Number(document.getElementById("inpPriceDC").value);
       const ni={id:document.getElementById("inpId").value,name:document.getElementById("inpName").value,cat:document.getElementById("inpCat").value,tag:document.getElementById("inpTag").value,desc:document.getElementById("inpDesc").value,img:document.getElementById("inpImg").value,hidden:document.getElementById("inpHidden").checked,uniteEnabled:unE,dcEnabled:dcE,uniteLabel:document.getElementById("inpUniteLabel").value||"Unité",dcLabel:document.getElementById("inpDCLabel").value||"DC",prices};
-      if(isEditMode){const idx=items.findIndex(i=>i.id===ni.id);if(idx!==-1)items[idx]=ni;}else{items.push(ni);}
+      if(isEditMode){const idx=items.findIndex(i=>i.id===ni.id);if(idx!==-1)items[idx]=ni;writeLog("edit",{itemId:ni.id,itemName:ni.name,itemCat:ni.cat});}else{items.push(ni);writeLog("add",{itemId:ni.id,itemName:ni.name,itemCat:ni.cat});}
       modal.classList.add("hidden");render();await saveData();
     });
 
@@ -1070,6 +1152,7 @@
           await setDoc(doc(db, "users", editingUserId), updateData, { merge: true });
           const idx = allUsersCache.findIndex(u => u.uid === editingUserId);
           if (idx !== -1) allUsersCache[idx] = { ...allUsersCache[idx], ...updateData };
+          writeLog("user_edit",{targetUid:editingUserId,targetName:displayName,targetEmail:allUsersCache.find(u=>u.uid===editingUserId)?.email||""});
           renderUsers();
           userModal.classList.add("hidden");
           editingUserId = null;
@@ -1099,6 +1182,7 @@
           };
           await setDoc(doc(db, "users", newUid), userData);
           allUsersCache.push({ uid: newUid, ...userData });
+          writeLog("user_create",{targetUid:newUid,targetName:userData.displayName,targetEmail:email});
           renderUsers();
           userModal.classList.add("hidden");
           showToast("Utilisateur créé avec succès ! ⚠️ Vous avez été déconnecté — reconnectez-vous.", "success");
@@ -1128,7 +1212,9 @@
     document.getElementById("confirmDelete").addEventListener("click", async () => {
       if (!pendingDeleteUid) return;
       try {
+        const targetUser = allUsersCache.find(u => u.uid === pendingDeleteUid);
         await deleteDoc(doc(db, "users", pendingDeleteUid));
+        writeLog("user_delete",{targetUid:pendingDeleteUid,targetEmail:targetUser?.email||""});
         allUsersCache = allUsersCache.filter(u => u.uid !== pendingDeleteUid);
         renderUsers();
         showToast("Utilisateur supprimé","success");
@@ -1138,6 +1224,201 @@
       }
       confirmModal.classList.add("hidden");
       pendingDeleteUid = null;
+    });
+
+    // ============================================================
+    // ACTIVITY LOGS — Super Admin only
+    // ============================================================
+
+    const LOG_ICONS = {
+      add: "➕", edit: "✏️", delete: "🗑️", hide: "🙈", show: "👁️",
+      user_create: "👤", user_edit: "🔧", user_delete: "❌",
+      login: "🔐", drag: "↕️"
+    };
+
+    async function writeLog(action, details = {}) {
+      if (!currentUserPerms) return;
+      try {
+        const logEntry = {
+          action,
+          actorEmail: auth.currentUser?.email || "?",
+          actorName: currentUserPerms.displayName || currentUserPerms.email || "?",
+          actorUid: auth.currentUser?.uid || "?",
+          server: currentServerId || null,
+          ts: Date.now(),
+          ...details
+        };
+        await addDoc(collection(db, "admin_logs"), logEntry);
+      } catch(e) {
+        console.warn("writeLog error", e);
+      }
+    }
+
+    let logsUnsubscribe = null;
+
+    async function loadLogs(reset = false) {
+      if (!currentUserPerms?.isSuperAdmin) return;
+      if (reset) {
+        logsCache = [];
+        logsLastDoc = null;
+        document.getElementById("logsList").innerHTML = '<div class="logs-empty">Chargement...</div>';
+      }
+
+      try {
+        // Build query
+        let q = query(collection(db, "admin_logs"), orderBy("ts", "desc"), limit(LOGS_PAGE_SIZE));
+        if (logsLastDoc) q = query(collection(db, "admin_logs"), orderBy("ts", "desc"), startAfter(logsLastDoc), limit(LOGS_PAGE_SIZE));
+
+        const snap = await getDocs(q);
+        const newLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        logsLastDoc = snap.docs[snap.docs.length - 1] || logsLastDoc;
+        logsCache = reset ? newLogs : [...logsCache, ...newLogs];
+
+        document.getElementById("logsLoadMore").style.display = snap.docs.length === LOGS_PAGE_SIZE ? "" : "none";
+        renderLogs();
+        renderLogsStats();
+      } catch(e) {
+        console.error("loadLogs error", e);
+        document.getElementById("logsList").innerHTML = '<div class="logs-empty" style="color:var(--danger)">Erreur de chargement des logs.</div>';
+      }
+    }
+
+    function renderLogs() {
+      const filters = logsActiveFilter === "all" ? [] : logsActiveFilter.split(",");
+      const search = logsSearchTerm.toLowerCase();
+
+      let filtered = logsCache.filter(log => {
+        if (filters.length && !filters.includes(log.action)) return false;
+        if (search) {
+          const haystack = [log.actorName, log.actorEmail, log.itemName, log.targetName, log.action, log.server].join(" ").toLowerCase();
+          if (!haystack.includes(search)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById("logsCount").textContent = filtered.length;
+
+      if (!filtered.length) {
+        document.getElementById("logsList").innerHTML = '<div class="logs-empty">Aucun log trouvé.</div>';
+        return;
+      }
+
+      document.getElementById("logsList").innerHTML = filtered.map(log => {
+        const icon = LOG_ICONS[log.action] || "📝";
+        const date = new Date(log.ts);
+        const dateStr = date.toLocaleDateString("fr-FR", { day:"2-digit", month:"short" });
+        const timeStr = date.toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
+        const srv = log.server && SERVERS[log.server];
+        const srvBadge = srv ? `<span class="log-srv-badge" style="color:${srv.color};border-color:${srv.color};background:${srv.color}18">${srv.name}</span>` : "";
+
+        let label = "";
+        let detail = "";
+        switch(log.action) {
+          case "add":
+            label = `Produit ajouté : <b>${escH(log.itemName || "?")}</b>`;
+            detail = `Catégorie : ${escH(log.itemCat || "?")} ${srvBadge}`;
+            break;
+          case "edit":
+            label = `Produit modifié : <b>${escH(log.itemName || "?")}</b>`;
+            detail = `Catégorie : ${escH(log.itemCat || "?")} ${srvBadge}`;
+            break;
+          case "delete":
+            label = `Produit supprimé : <b>${escH(log.itemName || "?")}</b>`;
+            detail = `Catégorie : ${escH(log.itemCat || "?")} ${srvBadge}`;
+            break;
+          case "hide":
+            label = `Produit masqué : <b>${escH(log.itemName || "?")}</b>`;
+            detail = srvBadge;
+            break;
+          case "show":
+            label = `Produit affiché : <b>${escH(log.itemName || "?")}</b>`;
+            detail = srvBadge;
+            break;
+          case "drag":
+            label = `Produit réordonné : <b>${escH(log.itemName || "?")}</b>`;
+            detail = `Vers catégorie : ${escH(log.newCat || "?")} ${srvBadge}`;
+            break;
+          case "user_create":
+            label = `Utilisateur créé : <b>${escH(log.targetName || log.targetEmail || "?")}</b>`;
+            detail = `Email : ${escH(log.targetEmail || "?")}`;
+            break;
+          case "user_edit":
+            label = `Utilisateur modifié : <b>${escH(log.targetName || log.targetEmail || "?")}</b>`;
+            detail = `Email : ${escH(log.targetEmail || "?")}`;
+            break;
+          case "user_delete":
+            label = `Utilisateur supprimé : <b>${escH(log.targetEmail || "?")}</b>`;
+            detail = "";
+            break;
+          case "login":
+            label = `Connexion au panel`;
+            detail = ``;
+            break;
+          default:
+            label = escH(log.action);
+        }
+
+        return `<div class="log-entry action-${escH(log.action)}">
+          <div class="log-icon">${icon}</div>
+          <div class="log-body">
+            <b>${label}</b>
+            ${detail ? `<div class="log-detail">${detail}</div>` : ""}
+          </div>
+          <div class="log-meta">
+            <div class="log-who">@${escH(log.actorName)}</div>
+            <div class="log-when">${dateStr} ${timeStr}</div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function renderLogsStats() {
+      const counts = {};
+      logsCache.forEach(l => { counts[l.action] = (counts[l.action]||0)+1; });
+      const uniqueActors = new Set(logsCache.map(l=>l.actorEmail)).size;
+      document.getElementById("logsStats").innerHTML = `
+        <div class="log-stat-card"><div class="stat-num">${logsCache.length}</div><div class="stat-lbl">Total actions</div></div>
+        <div class="log-stat-card"><div class="stat-num" style="color:var(--success)">${counts.add||0}</div><div class="stat-lbl">Ajouts</div></div>
+        <div class="log-stat-card"><div class="stat-num" style="color:var(--primary)">${counts.edit||0}</div><div class="stat-lbl">Modifs</div></div>
+        <div class="log-stat-card"><div class="stat-num" style="color:var(--danger)">${counts.delete||0}</div><div class="stat-lbl">Suppressions</div></div>
+        <div class="log-stat-card"><div class="stat-num" style="color:var(--warning)">${uniqueActors}</div><div class="stat-lbl">Admins actifs</div></div>
+      `;
+    }
+
+    // Filters
+    document.getElementById("logsFilters").addEventListener("click", (e) => {
+      const btn = e.target.closest(".log-filter-btn");
+      if (!btn) return;
+      document.querySelectorAll(".log-filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      logsActiveFilter = btn.dataset.filter;
+      renderLogs();
+    });
+
+    // Search
+    document.getElementById("logSearch").addEventListener("input", (e) => {
+      logsSearchTerm = e.target.value;
+      renderLogs();
+    });
+
+    // Load more
+    document.getElementById("loadMoreLogsBtn").addEventListener("click", () => loadLogs(false));
+
+    // Clear logs
+    document.getElementById("clearLogsBtn").addEventListener("click", async () => {
+      if (!currentUserPerms?.isSuperAdmin) return;
+      if (!confirm("Vider tous les logs ? Cette action est irréversible.")) return;
+      try {
+        const snap = await getDocs(collection(db, "admin_logs"));
+        const deletePromises = snap.docs.map(d => deleteDoc(doc(db, "admin_logs", d.id)));
+        await Promise.all(deletePromises);
+        logsCache = []; logsLastDoc = null;
+        renderLogs();
+        renderLogsStats();
+        showToast("Logs vidés", "success");
+      } catch(e) {
+        showToast("Erreur suppression logs", "err");
+      }
     });
 
     // ============================================================
