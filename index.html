@@ -53,12 +53,7 @@
           <div class="panelTitle">Filtres <button class="btn secondary" id="reset">Réinitialiser</button></div>
           <div class="field"><div class="label">Recherche</div><input class="input" id="q" placeholder="Rechercher un item..." /></div>
           <div class="field"><div class="label">Catégories</div><div class="chips" id="cats"></div></div>
-          <div class="field">
-            <div class="label">Prix</div>
-            <div class="rangeRow small"><span id="minLabel">0</span><span id="maxLabel">50000</span></div>
-            <input type="range" id="min" min="0" max="50000" value="0" />
-            <input type="range" id="max" min="0" max="50000" value="50000" />
-          </div>
+
         </div>
       </aside>
       <main class="panel content">
@@ -73,6 +68,36 @@
         <div class="empty" id="empty" style="display:none">Aucun produit ne correspond aux filtres.</div>
       </main>
     </section>
+
+    <!-- Ticket success popup -->
+    <div id="discordPopupBackdrop" class="discord-popup-backdrop">
+      <div class="discord-popup-modal">
+        <div class="discord-popup-header">
+          <div class="discord-popup-logo">
+            <svg width="48" height="36" viewBox="0 0 127.14 96.36" fill="#fff"><path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z"/></svg>
+          </div>
+          <div class="discord-popup-success-check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="discord-popup-badge discord-popup-badge-success">Ticket créé !</div>
+        </div>
+        <div class="discord-popup-body">
+          <h3 class="discord-popup-title">Ton ticket est prêt 🎉</h3>
+          <p class="discord-popup-text">Ton ticket a bien été créé sur notre serveur Discord. <b>Rejoins le serveur</b> pour y accéder et finaliser ta commande.</p>
+          <div class="discord-popup-ticket-id" id="popupTicketId"></div>
+          <a class="discord-popup-join-btn" id="popupTicketLink" href="#" target="_blank" rel="noopener">
+            <span class="discord-popup-join-icon">
+              <svg width="22" height="22" viewBox="0 0 127.14 96.36" fill="#fff"><path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z"/></svg>
+            </span>
+            <span>Accéder à mon ticket</span>
+            <svg class="discord-popup-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="discord-popup-footer">
+          <button class="discord-popup-cancel-btn" id="discordPopupCancel">Fermer</button>
+        </div>
+      </div>
+    </div>
 
     <div class="overlay" id="overlay"></div>
     <div class="drawer" id="drawer">
@@ -122,8 +147,7 @@ let activeCat = "Tous";
 const $ = id => document.getElementById(id);
 const grid=$("grid"),empty=$("empty"),shownEl=$("shown");
 const itemsCountEl=$("itemsCount"),catsEl=$("cats");
-const qEl=$("q"),minEl=$("min"),maxEl=$("max");
-const minLabel=$("minLabel"),maxLabel=$("maxLabel");
+const qEl=$("q");
 const overlay=$("overlay"),drawer=$("drawer");
 const cartLines=$("cartLines"),totalDollarEl=$("totalDollar"),msgEl=$("msg");
 
@@ -153,7 +177,7 @@ async function selectServer(id) {
   document.getElementById("changeSrv").addEventListener("click", showSelector);
   document.getElementById("serverOverlay").classList.add("hidden");
   document.getElementById("appRoot").style.display="block";
-  ITEMS=[]; activeCat="Tous"; qEl.value=""; minEl.value=0; maxEl.value=50000;
+  ITEMS=[]; activeCat="Tous"; qEl.value="";
 
   // Show skeleton while loading
   showSkeletons(6);
@@ -228,8 +252,46 @@ function renderCats(){
   catsEl.querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{activeCat=ch.dataset.cat;renderCats();renderProducts();}));
 }
 
+function makeCardEl(it, idx) {
+  if(!selectedMode[it.id])selectedMode[it.id]=hasUnite(it)?"unite":"dc";
+  const mode=selectedMode[it.id];
+  const curPrice=mode==="dc"?priceDC(it):priceUnite(it);
+  const div = document.createElement("div");
+  div.className = "card";
+  const delay = Math.min(idx * 45, 500);
+  div.style.animationDelay = delay + "ms";
+  div.innerHTML = `<div class="cardInner">
+    <div class="thumb">${it.img
+      ? `<img src="${it.img}" alt="${it.name}" loading="lazy" decoding="async" width="96" height="96" onerror="this.outerHTML='<div class=\\'fallback\\'>Image manquante</div>'">`
+      : `<div class="fallback">Aucune image</div>`
+    }</div>
+    <div class="cardTop"><div class="name">${it.name}</div><div class="tag">${it.tag}</div></div>
+    <div class="desc">${it.desc}</div>
+    ${(hasDC(it)||hasUnite(it))?`<div class="modeToggle">
+      <button type="button" class="${mode==='unite'?'active':''}" ${!hasUnite(it)?'disabled':''} data-mode-btn="${it.id}" data-mode="unite">📦 ${labelUnite(it)}</button>
+      <button type="button" class="${mode==='dc'?'active':''}" ${!hasDC(it)?'disabled':''} data-mode-btn="${it.id}" data-mode="dc">🗄️ ${labelDC(it)}</button>
+    </div>`:''}
+    <div class="modeRow">
+      <div class="qtyPicker">
+        <button type="button" class="qtyBtn" data-qdec="${it.id}">−</button>
+        <input class="qtyInput" type="number" min="1" step="1" value="1" data-qty="${it.id}">
+        <button type="button" class="qtyBtn" data-qinc="${it.id}">+</button>
+      </div>
+      <div class="pricePreview" id="price-${it.id}">${curPrice} $</div>
+    </div>
+    <button class="add" data-add="${it.id}">+ Ajouter au panier</button>
+  </div>`;
+  return div;
+}
+
+// Emoji map pour les catégories
+const CAT_ICONS = {
+  "Armures":"🛡️","Armes":"⚔️","Potions":"🧪","Minerais":"⛏️","Outils":"🔧","Blocs":"🧱","Nourriture":"🍖","Enchantements":"✨"
+};
+function catIcon(cat){ return CAT_ICONS[cat]||"📦"; }
+
 function renderProducts(){
-  const q=qEl.value.trim().toLowerCase(),mn=+minEl.value,mx=+maxEl.value;
+  const q=qEl.value.trim().toLowerCase(),mn=0,mx=Infinity;
   const filtered=ITEMS.filter(it=>{
     if(q&&!(it.name.toLowerCase().includes(q)||(it.desc||"").toLowerCase().includes(q)))return false;
     if(activeCat!=="Tous"&&it.cat!==activeCat)return false;
@@ -237,51 +299,58 @@ function renderProducts(){
     return(hasUnite(it)&&priceUnite(it)>=mn&&priceUnite(it)<=mx)||(hasDC(it)&&priceDC(it)>=mn&&priceDC(it)<=mx);
   });
   shownEl.textContent=filtered.length;
-  if(!filtered.length){grid.innerHTML="";empty.style.display="block";return;}
+  if(!filtered.length){grid.innerHTML="";grid.className="grid";empty.style.display="block";return;}
   empty.style.display="none";
 
-  // Use DocumentFragment for perf
+  // Si une catégorie spécifique est sélectionnée, afficher sans sections
+  if(activeCat !== "Tous") {
+    const frag = document.createDocumentFragment();
+    filtered.forEach((it, idx) => frag.appendChild(makeCardEl(it, idx)));
+    grid.innerHTML = "";
+    grid.className = "grid";
+    grid.appendChild(frag);
+    grid.addEventListener("click", gridClickHandler, {once:false});
+    grid.addEventListener("input", gridInputHandler, {once:false});
+    return;
+  }
+
+  // Grouper par catégorie en conservant l'ordre d'apparition
+  const groups = new Map();
+  filtered.forEach(it => {
+    if(!groups.has(it.cat)) groups.set(it.cat, []);
+    groups.get(it.cat).push(it);
+  });
+
   const frag = document.createDocumentFragment();
-  filtered.forEach((it, idx) => {
-    if(!selectedMode[it.id])selectedMode[it.id]=hasUnite(it)?"unite":"dc";
-    const mode=selectedMode[it.id];
-    const curPrice=mode==="dc"?priceDC(it):priceUnite(it);
-    const div = document.createElement("div");
-    div.className = "card";
-    // Staggered animation delay (max 500ms spread across visible cards)
-    const delay = Math.min(idx * 45, 500);
-    div.style.animationDelay = delay + "ms";
-    div.innerHTML = `<div class="cardInner">
-      <div class="thumb">${it.img
-        ? `<img src="${it.img}" alt="${it.name}" loading="lazy" decoding="async" width="96" height="96" onerror="this.outerHTML='<div class=\\'fallback\\'>Image manquante</div>'">`
-        : `<div class="fallback">Aucune image</div>`
-      }</div>
-      <div class="cardTop"><div class="name">${it.name}</div><div class="tag">${it.tag}</div></div>
-      <div class="desc">${it.desc}</div>
-      ${(hasDC(it)||hasUnite(it))?`<div class="modeToggle">
-        <button type="button" class="${mode==='unite'?'active':''}" ${!hasUnite(it)?'disabled':''} data-mode-btn="${it.id}" data-mode="unite">📦 ${labelUnite(it)}</button>
-        <button type="button" class="${mode==='dc'?'active':''}" ${!hasDC(it)?'disabled':''} data-mode-btn="${it.id}" data-mode="dc">🗄️ ${labelDC(it)}</button>
-      </div>`:''}
-      <div class="modeRow">
-        <div class="qtyPicker">
-          <button type="button" class="qtyBtn" data-qdec="${it.id}">−</button>
-          <input class="qtyInput" type="number" min="1" step="1" value="1" data-qty="${it.id}">
-          <button type="button" class="qtyBtn" data-qinc="${it.id}">+</button>
-        </div>
-        <div class="pricePreview" id="price-${it.id}">${curPrice} $</div>
-      </div>
-      <button class="add" data-add="${it.id}">+ Ajouter au panier</button>
-    </div>`;
-    frag.appendChild(div);
+  let globalIdx = 0;
+  groups.forEach((items, cat) => {
+    // Section header
+    const section = document.createElement("div");
+    section.className = "cat-section";
+
+    const header = document.createElement("div");
+    header.className = "cat-header";
+    header.innerHTML = `<span class="cat-icon">${catIcon(cat)}</span><span class="cat-label">${cat}</span><span class="cat-count">${items.length} article${items.length>1?'s':''}</span>`;
+    section.appendChild(header);
+
+    // Grid for this category
+    const catGrid = document.createElement("div");
+    catGrid.className = "grid cat-grid";
+    items.forEach(it => {
+      catGrid.appendChild(makeCardEl(it, globalIdx++));
+    });
+    section.appendChild(catGrid);
+    frag.appendChild(section);
   });
 
   grid.innerHTML = "";
+  grid.className = "cat-sections-wrapper";
   grid.appendChild(frag);
-
-  // Event delegation on grid (single listener instead of N listeners)
   grid.addEventListener("click", gridClickHandler, {once:false});
   grid.addEventListener("input", gridInputHandler, {once:false});
 }
+
+
 
 // ── Event delegation for grid ──────────────────────────────────────────────────
 function gridClickHandler(e) {
@@ -380,12 +449,19 @@ async function sendOrder(){
   if(!cart.size)return showMsg("❌ Ton panier est vide.","err");
   let total=0;const items=[];
   for(const[,line]of cart.entries()){const lt=line.unitPrice*line.qty;total+=lt;items.push({id:line.id,name:line.name,mode:line.modeLabel,qty:line.qty,price:line.unitPrice,total:lt});}
-  showMsg("⏳ Création du ticket Discord...","muted");
+  const sendBtn=$("send");
+  sendBtn.disabled=true;sendBtn.textContent="⏳ Création...";
   const res=await fetch("/api/create-ticket",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pseudo:username,discordPseudo,note,items,totalDollar:total,server:currentServer?.id||"unknown"})});
+  sendBtn.disabled=false;sendBtn.textContent="Ouvrir le ticket Discord";
   const data=await res.json().catch(()=>({}));
   if(!res.ok||!data.ok)return showMsg("❌ Erreur: "+(data.error||"impossible de créer le ticket"),"err");
   cart.clear();syncCount();renderCart();
-  showMsg("✅ Ticket créé ! ID: "+(data.orderId||"?")+(data.channelName?` (${data.channelName})`:""),"ok");
+  // Build ticket link — use channelUrl if returned, else fall back to Discord server invite
+  const ticketUrl = data.channelUrl || data.ticketUrl || "https://discord.gg/VOTRE_LIEN";
+  const ticketLabel = data.channelName ? "#"+data.channelName : (data.orderId ? "Ticket #"+data.orderId : "Ton ticket");
+  $("popupTicketLink").href = ticketUrl;
+  $("popupTicketId").textContent = ticketLabel;
+  document.getElementById("discordPopupBackdrop").classList.add("open");
 }
 
 function openCart(){overlay.style.display="block";drawer.style.transform="translateX(0)";renderCart();}
@@ -395,15 +471,17 @@ $("openCart").addEventListener("click",openCart);
 $("closeCart").addEventListener("click",closeCart);
 overlay.addEventListener("click",closeCart);
 $("orderBtn").addEventListener("click",openCart);
-$("send").addEventListener("click",sendOrder);
+$("send").addEventListener("click", sendOrder);
+$("discordPopupCancel").addEventListener("click", () => {
+  document.getElementById("discordPopupBackdrop").classList.remove("open");
+});
 $("toTop").addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
-$("reset").addEventListener("click",()=>{qEl.value="";minEl.value=0;maxEl.value=50000;activeCat="Tous";minLabel.textContent="0";maxLabel.textContent="50000";renderCats();renderProducts();});
+$("reset").addEventListener("click",()=>{qEl.value="";activeCat="Tous";renderCats();renderProducts();});
 
 // Debounce search input (avoid re-rendering on every keystroke)
 qEl.addEventListener("input", debounce(renderProducts, 180));
 
-minEl.addEventListener("input",()=>{if(+minEl.value>+maxEl.value)minEl.value=maxEl.value;minLabel.textContent=minEl.value;renderProducts();});
-maxEl.addEventListener("input",()=>{if(+maxEl.value<+minEl.value)maxEl.value=minEl.value;maxLabel.textContent=maxEl.value;renderProducts();});
+
 
 document.getElementById("cartFab").addEventListener("click",openCart);
 document.getElementById("filterToggleBtn").addEventListener("click",()=>{
