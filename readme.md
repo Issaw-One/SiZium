@@ -1,47 +1,75 @@
-# SiZium Shop — Multi-Serveurs
+# SiZium Shop — Multi-Serveurs (Supabase)
 
-## Structure JSONBin
+## Setup Supabase
 
-Chaque serveur a son propre Bin JSONBin. Crée 11 bins sur [jsonbin.io](https://jsonbin.io) et note leurs IDs.
+1. Crée un projet sur [supabase.com](https://supabase.com)
+2. Va dans **SQL Editor** et colle le contenu de `supabase_schema.sql`
+3. Récupère tes clés dans **Project Settings → API** :
+   - `URL` → `SUPABASE_URL`
+   - `service_role` (secret) → `SUPABASE_SERVICE_KEY`
 
 ## Variables d'environnement (Vercel / .env)
 
 ```env
-# Master key JSONBin (pour l'admin — lecture/écriture)
-JSONBIN_MASTER_KEY=ton_master_key
-
-# Un BIN_ID par serveur
-JSONBIN_BIN_ID_CORAL=xxx
-JSONBIN_BIN_ID_BLUE=xxx
-JSONBIN_BIN_ID_ORANGE=xxx
-JSONBIN_BIN_ID_YELLOW=xxx
-JSONBIN_BIN_ID_WHITE=xxx
-JSONBIN_BIN_ID_BLACK=xxx
-JSONBIN_BIN_ID_CYAN=xxx
-JSONBIN_BIN_ID_LIME=xxx
-JSONBIN_BIN_ID_RED=xxx
-JSONBIN_BIN_ID_MOCHA=xxx
-JSONBIN_BIN_ID_JADE=xxx
+# Supabase
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_SERVICE_KEY=eyJhbGci...   # clé service_role (jamais exposée côté client)
 
 # Bot Discord
 DISCORD_BOT_TOKEN=xxx
 DISCORD_GUILD_ID=xxx
 DISCORD_CATEGORY_ID=xxx
 DISCORD_STAFF_ROLE_ID=xxx
+
+# Rôles Discord par serveur (optionnel)
+CORAL_ROLE_ID=xxx
+BLUE_ROLE_ID=xxx
+ORANGE_ROLE_ID=xxx
+YELLOW_ROLE_ID=xxx
+WHITE_ROLE_ID=xxx
+BLACK_ROLE_ID=xxx
+CYAN_ROLE_ID=xxx
+LIME_ROLE_ID=xxx
+RED_ROLE_ID=xxx
+MOCHA_ROLE_ID=xxx
+JADE_ROLE_ID=xxx
+VENDOR_ROLE_ID=xxx
 ```
 
-## Côté client (index.html)
+## Structure de la table Supabase
 
-Dans le tableau `SERVERS`, remplace chaque `binId` par l'ID du bin correspondant,
-et `accessKey` par la clé d'accès public JSONBin (lecture seule).
-
-```js
-{ id:"coral", name:"Coral", color:"#FF6B6B", binId:"TON_BIN_ID_CORAL", accessKey:"$2a$10$..." },
 ```
+shops
+├── id         TEXT  PRIMARY KEY  (ex: 'coral', 'blue' …)
+├── name       TEXT               (ex: 'Coral')
+├── color      TEXT               (ex: '#FF6B6B')
+├── items      JSONB              (tableau de produits)
+└── updated_at TIMESTAMPTZ
+```
+
+Chaque serveur = 1 row dans la table `shops`.  
+Les items sont stockés en JSONB avec le même format qu'avant :
+
+```json
+[
+  {
+    "id": "paladium_sword",
+    "name": "Épée Paladium",
+    "cat": "Armes",
+    "prices": { "$": 10, "dc": 5 },
+    "hidden": false
+  }
+]
+```
+
+## API serverless
+
+- `GET  /api/supabase?server=coral` → retourne `{ record: { items: [...] } }`
+- `PUT  /api/supabase?server=coral` + body `{ items: [...] }` → sauvegarde
 
 ## Admin — Associer un vendeur à son serveur
 
-Dans `admin/index.html`, dans la map `EMAIL_TO_SERVER`, ajoute :
+Dans `admin/index.html`, dans la map `EMAIL_TO_SERVER` :
 
 ```js
 const EMAIL_TO_SERVER = {
@@ -50,5 +78,3 @@ const EMAIL_TO_SERVER = {
   // ...
 };
 ```
-
-Le vendeur ne pourra lire et modifier **que** le catalogue de son serveur.

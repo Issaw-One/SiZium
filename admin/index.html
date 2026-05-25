@@ -711,12 +711,12 @@
     document.getElementById("adLogoutBtn").addEventListener("click",()=>signOut(auth));
 
     // ============================================================
-    // DATA — JSONBin via /api/jsonbin?server=X
+    // DATA — JSONBin via /api/supabase?server=X
     // ============================================================
     async function loadData() {
       showToast("Chargement des produits...");
       try {
-        const res = await fetch(`/api/jsonbin?server=${currentServerId}`,{method:"GET"});
+        const res = await fetch(`/api/supabase?server=${currentServerId}`,{method:"GET"});
         if(!res.ok) throw new Error("Réponse API invalide");
         const data = await res.json();
         items = data.record?.items || [];
@@ -731,7 +731,7 @@
     async function saveData() {
       showToast("Enregistrement...");
       try {
-        const res = await fetch(`/api/jsonbin?server=${currentServerId}`,{
+        const res = await fetch(`/api/supabase?server=${currentServerId}`,{
           method:"PUT",
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify({items})

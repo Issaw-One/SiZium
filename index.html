@@ -125,17 +125,17 @@
 
 <script>
 const SERVERS = [
-  { id:"coral",  name:"Coral",  color:"#FF6B6B", binId:"69bfe30ac3097a1dd54ae210",  accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"  },
-  { id:"blue",   name:"Blue",   color:"#4A9EFF", binId:"69bfe34eb7ec241ddc901b5b",   accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"   },
-  { id:"orange", name:"Orange", color:"#FF9500", binId:"69bfe35cc3097a1dd54ae340", accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK" },
-  { id:"yellow", name:"Yellow", color:"#FFD60A", binId:"69bfe369b7ec241ddc901bb3", accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK" },
-  { id:"white",  name:"White",  color:"#C8C8C8", binId:"69bfe376c3097a1dd54ae398",  accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"  },
-  { id:"black",  name:"Black",  color:"#666666", binId:"69bfe383c3097a1dd54ae3c4",  accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"  },
-  { id:"cyan",   name:"Cyan",   color:"#00D4D4", binId:"69bfe38cc3097a1dd54ae3e3",   accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"   },
-  { id:"lime",   name:"Lime",   color:"#7ED321", binId:"69bfe397aa77b81da909f8be",   accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"   },
-  { id:"red",    name:"Red",    color:"#FF3030", binId:"69bfe3aab7ec241ddc901c77",    accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"    },
-  { id:"mocha",  name:"Mocha",  color:"#C8845A", binId:"69bfe3c0b7ec241ddc901cbc",  accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"  },
-  { id:"jade",   name:"Jade",   color:"#00A86B", binId:"69bfe3caaa77b81da909f942",   accessKey:"$2a$10$LaVFI31CpQpIVZygqrZgUOiudBxq.r9DXaAeMIUKcM7qkKEHyf3pK"   },
+  { id:"coral",  name:"Coral",  color:"#FF6B6B" },
+  { id:"blue",   name:"Blue",   color:"#4A9EFF" },
+  { id:"orange", name:"Orange", color:"#FF9500" },
+  { id:"yellow", name:"Yellow", color:"#FFD60A" },
+  { id:"white",  name:"White",  color:"#C8C8C8" },
+  { id:"black",  name:"Black",  color:"#666666" },
+  { id:"cyan",   name:"Cyan",   color:"#00D4D4" },
+  { id:"lime",   name:"Lime",   color:"#7ED321" },
+  { id:"red",    name:"Red",    color:"#FF3030" },
+  { id:"mocha",  name:"Mocha",  color:"#C8845A" },
+  { id:"jade",   name:"Jade",   color:"#00A86B" },
 ];
 
 let currentServer = null;
@@ -230,10 +230,8 @@ document.getElementById("serverPickerBackdrop").addEventListener("click", functi
 });
 
 async function loadItems(srv) {
-  const res = await fetch(`https://api.jsonbin.io/v3/b/${srv.binId}/latest`, {
-    headers:{"Content-Type":"application/json","X-Access-Key":srv.accessKey}
-  });
-  if(!res.ok) throw new Error("JSONBin error: "+res.status);
+  const res = await fetch(`/api/supabase?server=${srv.id}`, { method: "GET" });
+  if(!res.ok) throw new Error("Supabase error: "+res.status);
   const data = await res.json();
   if(!data.record||!Array.isArray(data.record.items)) throw new Error("Format invalide");
   ITEMS = data.record.items.filter(i=>i.hidden!==true);
