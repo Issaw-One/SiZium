@@ -170,13 +170,13 @@ async function selectServer(id) {
   const srv = SERVERS.find(s=>s.id===id);
   if(!srv) return;
   currentServer = srv;
-  document.getElementById("serverBadgeWrap").innerHTML =
-    `<div class="server-badge" id="changeSrv">
-      <div class="sbdot" style="background:${srv.color}"></div>${srv.name}<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="opacity:.6;margin-left:2px"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>`;
-  document.getElementById("changeSrv").addEventListener("click", showSelector);
-  document.getElementById("serverOverlay").classList.add("hidden");
-  document.getElementById("appRoot").style.display="block";
+  //document.getElementById("serverBadgeWrap").innerHTML =
+    //`<div class="server-badge" id="changeSrv">
+      //<div class="sbdot" style="background:${srv.color}"></div>${srv.name}<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="opacity:.6;margin-left:2px"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    //</div>`;
+  //document.getElementById("changeSrv").addEventListener("click", showSelector);
+  //document.getElementById("serverOverlay").classList.add("hidden");
+  //document.getElementById("appRoot").style.display="block";
   ITEMS=[]; activeCat="Tous"; qEl.value="";
 
   // Show skeleton while loading
