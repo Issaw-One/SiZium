@@ -179,7 +179,7 @@ async function selectServer(id) {
   document.getElementById("appRoot").style.display="block";
   ITEMS=[]; activeCat="Tous"; qEl.value="";
 
-  // Show skeleton while loading.
+  // Show skeleton while loading
   showSkeletons(6);
   empty.style.display="none";
   shownEl.textContent="0";
@@ -195,8 +195,10 @@ async function selectServer(id) {
   }
 }
 
+window.addEventListener("load", () => {
   selectServer("coral");
-  
+});
+
 function showSkeletons(n) {
   grid.innerHTML = Array.from({length:n}, () =>
     `<div class="skeleton-card"><div class="skeleton-inner">
@@ -232,7 +234,7 @@ document.getElementById("serverPickerBackdrop").addEventListener("click", functi
 });
 
 async function loadItems(srv) {
-  const res = await fetch(`/api/jsonbin?server=${srv.id}`, { method: "GET" });
+  const res = await fetch(`/api/supabase?server=${srv.id}`, { method: "GET" });
   if(!res.ok) throw new Error("Supabase error: "+res.status);
   const data = await res.json();
   if(!data.record||!Array.isArray(data.record.items)) throw new Error("Format invalide");
@@ -277,7 +279,7 @@ function makeCardEl(it, idx) {
         <input class="qtyInput" type="number" min="1" step="1" value="1" data-qty="${it.id}">
         <button type="button" class="qtyBtn" data-qinc="${it.id}">+</button>
       </div>
-      <div class="pricePreview" id="price-${it.id}">${curPrice} $</div>
+      <div class="pricePreview" id="price-${it.id}" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1">${curPrice} $</div>
     </div>
     <button class="add" data-add="${it.id}">+ Ajouter au panier</button>
   </div>`;
@@ -393,6 +395,9 @@ function gridClickHandler(e) {
     const key=`${id}|${mode}`,ex=cart.get(key);
     if(ex)ex.qty+=qty;else cart.set(key,{id,name:it.name,mode,modeLabel:mode==="dc"?labelDC(it):labelUnite(it),unitPrice,qty});
     syncCount();
+    // Reset qty to 1 after adding to cart
+    const qtyInp = grid.querySelector(`[data-qty="${id}"]`);
+    if(qtyInp){ qtyInp.value="1"; const el=$("price-"+id); if(el)el.textContent=`${unitPrice} $`; }
     // Flash animation on button
     addBtn.classList.remove("added");
     void addBtn.offsetWidth; // reflow to restart animation
