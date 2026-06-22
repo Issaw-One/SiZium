@@ -232,7 +232,7 @@ document.getElementById("serverPickerBackdrop").addEventListener("click", functi
 });
 
 async function loadItems(srv) {
-  const res = await fetch(`/api/supabase?server=${srv.id}`, { method: "GET" });
+  const res = await fetch(`/api/jsonbin?server=${srv.id}`, { method: "GET" });
   if(!res.ok) throw new Error("Supabase error: "+res.status);
   const data = await res.json();
   if(!data.record||!Array.isArray(data.record.items)) throw new Error("Format invalide");
