@@ -195,7 +195,9 @@ async function selectServer(id) {
   }
 }
 
-selectServer("coral");
+window.addEventListener("load", () => {
+  selectServer("coral");
+});
   
 function showSkeletons(n) {
   grid.innerHTML = Array.from({length:n}, () =>
