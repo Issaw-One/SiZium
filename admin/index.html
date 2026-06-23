@@ -716,7 +716,7 @@
     async function loadData() {
       showToast("Chargement des produits...");
       try {
-        const res = await fetch(`/api/supabase?server=${currentServerId}`,{method:"GET"});
+        const res = await fetch(`/api/jsonbin?server=${currentServerId}`,{method:"GET"});
         if(!res.ok) throw new Error("Réponse API invalide");
         const data = await res.json();
         items = data.record?.items || [];
