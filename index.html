@@ -195,7 +195,28 @@ async function selectServer(id) {
   }
 }
 
-  selectServer("coral");
+// Check if user is logged in and redirect to services selection
+function checkAuthAndRedirect() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    // If not logged in, show the original server overlay
+    return false;
+  }
+  
+  // If logged in, redirect to services selection
+  const selectedService = localStorage.getItem('selectedService');
+  if (!selectedService) {
+    window.location.href = '/services';
+    return true;
+  }
+  
+  return false;
+}
+
+  // Check auth and redirect if needed
+  if (!checkAuthAndRedirect()) {
+    selectServer("coral");
+  }
   
 function showSkeletons(n) {
   grid.innerHTML = Array.from({length:n}, () =>
@@ -248,8 +269,11 @@ function labelUnite(it){return it.uniteLabel||"Unité"}
 function uniqCats(){return["Tous",...new Set(ITEMS.map(i=>i.cat))]}
 
 function renderCats(){
-  catsEl.innerHTML=uniqCats().map(c=>`<div class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</div>`).join("");
-  catsEl.querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{activeCat=ch.dataset.cat;renderCats();renderProducts();}));
+  catsEl.innerHTML=uniqCats().map(c=>`<div class="cat-btn ${c===activeCat?"active":""}" data-cat="${c}">
+    <span class="cat-btn-icon">${catIcon(c)}</span>
+    <span class="cat-btn-text">${c}</span>
+  </div>`).join("");
+  catsEl.querySelectorAll(".cat-btn").forEach(ch=>ch.addEventListener("click",()=>{activeCat=ch.dataset.cat;renderCats();renderProducts();}));
 }
 
 function makeCardEl(it, idx) {
@@ -260,6 +284,12 @@ function makeCardEl(it, idx) {
   div.className = "card";
   const delay = Math.min(idx * 45, 500);
   div.style.animationDelay = delay + "ms";
+  
+  // Items that should display DC count
+  const itemsWithDC = ["casque eco", "casque desh", "volca", "plastron en desh", "plastron en volca", "jambières", "jambière"];
+  const showDCCount = itemsWithDC.some(keyword => it.name.toLowerCase().includes(keyword)) && hasDC(it);
+  const dcCount = it.dcCount || 0;
+  
   div.innerHTML = `<div class="cardInner">
     <div class="thumb">${it.img
       ? `<img src="${it.img}" alt="${it.name}" loading="lazy" decoding="async" width="96" height="96" onerror="this.outerHTML='<div class=\\'fallback\\'>Image manquante</div>'">`
@@ -271,6 +301,7 @@ function makeCardEl(it, idx) {
       <button type="button" class="${mode==='unite'?'active':''}" ${!hasUnite(it)?'disabled':''} data-mode-btn="${it.id}" data-mode="unite">📦 ${labelUnite(it)}</button>
       <button type="button" class="${mode==='dc'?'active':''}" ${!hasDC(it)?'disabled':''} data-mode-btn="${it.id}" data-mode="dc">🗄️ ${labelDC(it)}</button>
     </div>`:''}
+    ${showDCCount ? `<div class="dcCountBadge">🗄️ DC disponibles: <span class="dcCountValue">${dcCount}</span></div>` : ''}
     <div class="modeRow">
       <div class="qtyPicker">
         <button type="button" class="qtyBtn" data-qdec="${it.id}">−</button>
@@ -285,10 +316,10 @@ function makeCardEl(it, idx) {
 }
 
 // Emoji map pour les catégories
-//const CAT_ICONS = {
-  //"Armures":"🛡️","Armes":"⚔️","Potions":"🧪","Minerais":"⛏️","Outils":"🔧","Blocs":"🧱","Nourriture":"🍖","Enchantements":"✨"
-//};
-//function catIcon(cat){ return CAT_ICONS[cat]||"📦"; }
+const CAT_ICONS = {
+  "Tous":"📦","Armures":"🛡️","Armes":"⚔️","Potions":"🧪","Minerais":"⛏️","Outils":"🔧","Blocs":"🧱","Nourriture":"🍖","Enchantements":"✨"
+};
+function catIcon(cat){ return CAT_ICONS[cat]||"📦"; }
 
 function renderProducts(){
   const q=qEl.value.trim().toLowerCase(),mn=0,mx=Infinity;

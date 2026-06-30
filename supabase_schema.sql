@@ -41,6 +41,74 @@ INSERT INTO shops (id, name, color) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
+-- Users table for authentication and purchase history
+-- ============================================================
+CREATE TABLE IF NOT EXISTS users (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email         TEXT UNIQUE NOT NULL,
+  password      TEXT,  -- In production, this should be hashed
+  discord_id    TEXT UNIQUE,
+  role          TEXT NOT NULL DEFAULT 'neutral', -- 'ally', 'neutral', 'enemy', etc.
+  total_orders  INTEGER DEFAULT 0,
+  total_items   INTEGER DEFAULT 0,
+  total_spent   INTEGER DEFAULT 0,
+  created_at    TIMESTAMPTZ DEFAULT now(),
+  updated_at    TIMESTAMPTZ DEFAULT now()
+);
+
+-- Trigger for users updated_at
+CREATE TRIGGER users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ============================================================
+-- Auctions table
+-- ============================================================
+CREATE TABLE IF NOT EXISTS auctions (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  item_name     TEXT NOT NULL,
+  item_image    TEXT,
+  description   TEXT,
+  starting_bid  INTEGER NOT NULL,
+  current_bid   INTEGER NOT NULL,
+  min_increment INTEGER DEFAULT 1,
+  end_time      TIMESTAMPTZ NOT NULL,
+  seller_id     UUID REFERENCES users(id),
+  winner_id     UUID REFERENCES users(id),
+  status        TEXT NOT NULL DEFAULT 'active', -- 'active', 'ended', 'cancelled'
+  created_at    TIMESTAMPTZ DEFAULT now(),
+  updated_at    TIMESTAMPTZ DEFAULT now()
+);
+
+-- Trigger for auctions updated_at
+CREATE TRIGGER auctions_updated_at
+  BEFORE UPDATE ON auctions
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ============================================================
+-- Bids table
+-- ============================================================
+CREATE TABLE IF NOT EXISTS bids (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  auction_id    UUID NOT NULL REFERENCES auctions(id) ON DELETE CASCADE,
+  user_id       UUID NOT NULL REFERENCES users(id),
+  amount        INTEGER NOT NULL,
+  created_at    TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- Purchase history table
+-- ============================================================
+CREATE TABLE IF NOT EXISTS purchases (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID NOT NULL REFERENCES users(id),
+  server        TEXT NOT NULL,
+  items         JSONB NOT NULL,
+  total         INTEGER NOT NULL,
+  created_at    TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
 -- Row Level Security (RLS)
 -- ============================================================
 
@@ -51,7 +119,41 @@ CREATE POLICY "public_read" ON shops
   FOR SELECT USING (true);
 
 -- Écriture uniquement via la service_role key (ton API serverless)
--- Les INSERT/UPDATE/DELETE depuis le client JS public sont bloqués.
--- Seule ta clé SUPABASE_SERVICE_KEY peut écrire.
 CREATE POLICY "service_write" ON shops
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Users RLS
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "users_read_own" ON users
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "users_service_write" ON users
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Auctions RLS
+ALTER TABLE auctions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auctions_public_read" ON auctions
+  FOR SELECT USING (true);
+
+CREATE POLICY "auctions_service_write" ON auctions
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Bids RLS
+ALTER TABLE bids ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "bids_public_read" ON bids
+  FOR SELECT USING (true);
+
+CREATE POLICY "bids_service_write" ON bids
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Purchases RLS
+ALTER TABLE purchases ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "purchases_read_own" ON purchases
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "purchases_service_write" ON purchases
   FOR ALL USING (auth.role() = 'service_role');
