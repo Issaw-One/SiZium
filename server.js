@@ -21,9 +21,9 @@ app.use(express.static(__dirname));
 // API routes
 app.use('/api/create-ticket', (await import('./api/create-ticket.js')).default);
 app.use('/api/jsonbin', (await import('./api/jsonbin.js')).default);
-app.use('/api/supabase', (await import('./api/supabase.js')).default);
+app.use('/api/data', (await import('./api/data.js')).default);
 
-// Auth routes (to be implemented)
+// Auth routes
 app.use('/api/auth', (await import('./api/auth.js')).default);
 app.use('/api/auctions', (await import('./api/auctions.js')).default);
 app.use('/api/users', (await import('./api/users.js')).default);

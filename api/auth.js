@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+import { readJSON, writeJSON, generateId } from '../lib/storage.js';
 
 export const config = {
   runtime: "nodejs"
@@ -40,19 +35,10 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Email et mot de passe requis' });
       }
 
-      // Check if user exists
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .single();
+      const users = await readJSON('users.json');
+      const user = users.find(u => u.email === email);
 
-      if (error || !user) {
-        return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
-      }
-
-      // Verify password (in production, use bcrypt)
-      if (user.password !== password) {
+      if (!user || user.password !== password) {
         return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
       }
 
@@ -63,9 +49,9 @@ export default async function handler(req, res) {
         user: {
           id: user.id,
           email: user.email,
-          discordId: user.discord_id,
+          discordId: user.discordId,
           role: user.role,
-          createdAt: user.created_at
+          createdAt: user.createdAt
         }
       });
     }
@@ -82,34 +68,26 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 6 caractères' });
       }
 
-      // Check if user already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .single();
-
-      if (existingUser) {
+      const users = await readJSON('users.json');
+      
+      if (users.find(u => u.email === email)) {
         return res.status(400).json({ error: 'Cet email est déjà utilisé' });
       }
 
-      // Create user
-      const { data: newUser, error } = await supabase
-        .from('users')
-        .insert({
-          email,
-          password, // In production, hash this with bcrypt
-          role: 'neutral',
-          total_orders: 0,
-          total_items: 0,
-          total_spent: 0
-        })
-        .select()
-        .single();
+      const newUser = {
+        id: generateId(),
+        email,
+        password, // In production, hash this with bcrypt
+        discordId: null,
+        role: 'neutral',
+        totalOrders: 0,
+        totalItems: 0,
+        totalSpent: 0,
+        createdAt: new Date().toISOString()
+      };
 
-      if (error) {
-        return res.status(500).json({ error: 'Erreur lors de la création du compte' });
-      }
+      users.push(newUser);
+      await writeJSON('users.json', users);
 
       const token = generateToken(newUser.id);
 
@@ -118,9 +96,9 @@ export default async function handler(req, res) {
         user: {
           id: newUser.id,
           email: newUser.email,
-          discordId: newUser.discord_id,
+          discordId: newUser.discordId,
           role: newUser.role,
-          createdAt: newUser.created_at
+          createdAt: newUser.createdAt
         }
       });
     }
@@ -166,35 +144,28 @@ export default async function handler(req, res) {
       const discordUser = await userRes.json();
 
       // Check if user exists by Discord ID
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('discord_id', discordUser.id)
-        .single();
+      const users = await readJSON('users.json');
+      let user = users.find(u => u.discordId === discordUser.id);
 
-      let user;
-      if (existingUser) {
-        user = existingUser;
+      if (user) {
         // Update email if changed
-        await supabase
-          .from('users')
-          .update({ email: discordUser.email })
-          .eq('id', user.id);
+        user.email = discordUser.email;
+        await writeJSON('users.json', users);
       } else {
         // Create new user
-        const { data: newUser } = await supabase
-          .from('users')
-          .insert({
-            email: discordUser.email,
-            discord_id: discordUser.id,
-            role: 'neutral',
-            total_orders: 0,
-            total_items: 0,
-            total_spent: 0
-          })
-          .select()
-          .single();
-        user = newUser;
+        user = {
+          id: generateId(),
+          email: discordUser.email,
+          password: null,
+          discordId: discordUser.id,
+          role: 'neutral',
+          totalOrders: 0,
+          totalItems: 0,
+          totalSpent: 0,
+          createdAt: new Date().toISOString()
+        };
+        users.push(user);
+        await writeJSON('users.json', users);
       }
 
       const token = generateToken(user.id);
@@ -205,23 +176,20 @@ export default async function handler(req, res) {
 
     // Verify token
     if (method === 'POST' && path === 'verify') {
-      const { token } = req.body;
+      const { token: reqToken } = req.body;
 
-      if (!token) {
+      if (!reqToken) {
         return res.status(400).json({ error: 'Token requis' });
       }
 
-      const payload = verifyToken(token);
+      const payload = verifyToken(reqToken);
 
       if (!payload) {
         return res.status(401).json({ error: 'Token invalide ou expiré' });
       }
 
-      const { data: user } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', payload.userId)
-        .single();
+      const users = await readJSON('users.json');
+      const user = users.find(u => u.id === payload.userId);
 
       if (!user) {
         return res.status(404).json({ error: 'Utilisateur non trouvé' });
@@ -232,11 +200,11 @@ export default async function handler(req, res) {
         user: {
           id: user.id,
           email: user.email,
-          discordId: user.discord_id,
+          discordId: user.discordId,
           role: user.role,
-          totalOrders: user.total_orders,
-          totalItems: user.total_items,
-          totalSpent: user.total_spent
+          totalOrders: user.totalOrders,
+          totalItems: user.totalItems,
+          totalSpent: user.totalSpent
         }
       });
     }

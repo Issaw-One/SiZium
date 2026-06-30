@@ -1,0 +1,68 @@
+[
+  {
+    "id": "coral",
+    "name": "Coral",
+    "color": "#FF6B6B",
+    "items": []
+  },
+  {
+    "id": "blue",
+    "name": "Blue",
+    "color": "#4A9EFF",
+    "items": []
+  },
+  {
+    "id": "orange",
+    "name": "Orange",
+    "color": "#FF9500",
+    "items": []
+  },
+  {
+    "id": "yellow",
+    "name": "Yellow",
+    "color": "#FFD60A",
+    "items": []
+  },
+  {
+    "id": "white",
+    "name": "White",
+    "color": "#C8C8C8",
+    "items": []
+  },
+  {
+    "id": "black",
+    "name": "Black",
+    "color": "#666666",
+    "items": []
+  },
+  {
+    "id": "cyan",
+    "name": "Cyan",
+    "color": "#00D4D4",
+    "items": []
+  },
+  {
+    "id": "lime",
+    "name": "Lime",
+    "color": "#7ED321",
+    "items": []
+  },
+  {
+    "id": "red",
+    "name": "Red",
+    "color": "#FF3030",
+    "items": []
+  },
+  {
+    "id": "mocha",
+    "name": "Mocha",
+    "color": "#C8845A",
+    "items": []
+  },
+  {
+    "id": "jade",
+    "name": "Jade",
+    "color": "#00A86B",
+    "items": []
+  }
+]

@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+import { readJSON, writeJSON, generateId } from '../lib/storage.js';
 
 export const config = {
   runtime: "nodejs"
@@ -33,42 +28,33 @@ export default async function handler(req, res) {
   try {
     // Get all active auctions
     if (method === 'GET' && path === '') {
-      const { data: auctions, error } = await supabase
-        .from('auctions')
-        .select('*')
-        .eq('status', 'active')
-        .order('end_time', { ascending: true });
+      const auctions = await readJSON('auctions.json');
+      const activeAuctions = auctions
+        .filter(a => a.status === 'active')
+        .sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
 
-      if (error) {
-        return res.status(500).json({ error: 'Failed to fetch auctions' });
-      }
-
-      return res.json({ auctions: auctions || [] });
+      return res.json({ auctions: activeAuctions });
     }
 
     // Get single auction with bids
     if (method === 'GET' && path?.startsWith('id/')) {
       const auctionId = path.split('id/')[1];
 
-      const { data: auction, error } = await supabase
-        .from('auctions')
-        .select('*')
-        .eq('id', auctionId)
-        .single();
+      const auctions = await readJSON('auctions.json');
+      const auction = auctions.find(a => a.id === auctionId);
 
-      if (error || !auction) {
+      if (!auction) {
         return res.status(404).json({ error: 'Auction not found' });
       }
 
       // Get bids
-      const { data: bids } = await supabase
-        .from('bids')
-        .select('*')
-        .eq('auction_id', auctionId)
-        .order('amount', { ascending: false })
-        .limit(10);
+      const bids = await readJSON('bids.json');
+      const auctionBids = bids
+        .filter(b => b.auctionId === auctionId)
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 10);
 
-      return res.json({ auction, bids: bids || [] });
+      return res.json({ auction, bids: auctionBids });
     }
 
     // Create auction
@@ -91,25 +77,24 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
-      const { data: auction, error } = await supabase
-        .from('auctions')
-        .insert({
-          item_name: itemName,
-          item_image: itemImage,
-          description,
-          starting_bid: startingBid,
-          current_bid: startingBid,
-          min_increment: minIncrement || 1,
-          end_time: new Date(endTime).toISOString(),
-          seller_id: payload.userId,
-          status: 'active'
-        })
-        .select()
-        .single();
+      const auction = {
+        id: generateId(),
+        itemName,
+        itemImage,
+        description,
+        startingBid,
+        currentBid: startingBid,
+        minIncrement: minIncrement || 1,
+        endTime: new Date(endTime).toISOString(),
+        sellerId: payload.userId,
+        winnerId: null,
+        status: 'active',
+        createdAt: new Date().toISOString()
+      };
 
-      if (error) {
-        return res.status(500).json({ error: 'Failed to create auction' });
-      }
+      const auctions = await readJSON('auctions.json');
+      auctions.push(auction);
+      await writeJSON('auctions.json', auctions);
 
       return res.json({ success: true, auction });
     }
@@ -135,55 +120,48 @@ export default async function handler(req, res) {
       }
 
       // Get auction
-      const { data: auction, error: auctionError } = await supabase
-        .from('auctions')
-        .select('*')
-        .eq('id', auctionId)
-        .single();
+      const auctions = await readJSON('auctions.json');
+      const auctionIndex = auctions.findIndex(a => a.id === auctionId);
 
-      if (auctionError || !auction) {
+      if (auctionIndex === -1) {
         return res.status(404).json({ error: 'Auction not found' });
       }
+
+      const auction = auctions[auctionIndex];
 
       if (auction.status !== 'active') {
         return res.status(400).json({ error: 'Auction is not active' });
       }
 
-      if (new Date(auction.end_time) < new Date()) {
+      if (new Date(auction.endTime) < new Date()) {
         return res.status(400).json({ error: 'Auction has ended' });
       }
 
-      if (amount <= auction.current_bid) {
+      if (amount <= auction.currentBid) {
         return res.status(400).json({ error: 'Bid must be higher than current bid' });
       }
 
-      const minBid = auction.current_bid + auction.min_increment;
+      const minBid = auction.currentBid + auction.minIncrement;
       if (amount < minBid) {
         return res.status(400).json({ error: `Minimum bid is ${minBid}` });
       }
 
       // Create bid
-      const { error: bidError } = await supabase
-        .from('bids')
-        .insert({
-          auction_id: auctionId,
-          user_id: payload.userId,
-          amount
-        });
+      const bid = {
+        id: generateId(),
+        auctionId,
+        userId: payload.userId,
+        amount,
+        createdAt: new Date().toISOString()
+      };
 
-      if (bidError) {
-        return res.status(500).json({ error: 'Failed to place bid' });
-      }
+      const bids = await readJSON('bids.json');
+      bids.push(bid);
+      await writeJSON('bids.json', bids);
 
       // Update auction current bid
-      const { error: updateError } = await supabase
-        .from('auctions')
-        .update({ current_bid: amount })
-        .eq('id', auctionId);
-
-      if (updateError) {
-        console.error('Failed to update auction:', updateError);
-      }
+      auctions[auctionIndex].currentBid = amount;
+      await writeJSON('auctions.json', auctions);
 
       return res.json({ success: true, newBid: amount });
     }
@@ -209,39 +187,26 @@ export default async function handler(req, res) {
       }
 
       // Get auction
-      const { data: auction } = await supabase
-        .from('auctions')
-        .select('*')
-        .eq('id', auctionId)
-        .single();
+      const auctions = await readJSON('auctions.json');
+      const auctionIndex = auctions.findIndex(a => a.id === auctionId);
 
-      if (!auction) {
+      if (auctionIndex === -1) {
         return res.status(404).json({ error: 'Auction not found' });
       }
 
       // Get highest bid
-      const { data: highestBid } = await supabase
-        .from('bids')
-        .select('*')
-        .eq('auction_id', auctionId)
-        .order('amount', { ascending: false })
-        .limit(1)
-        .single();
+      const bids = await readJSON('bids.json');
+      const auctionBids = bids.filter(b => b.auctionId === auctionId);
+      const highestBid = auctionBids.length > 0 
+        ? auctionBids.sort((a, b) => b.amount - a.amount)[0] 
+        : null;
 
       // Update auction
-      const { error } = await supabase
-        .from('auctions')
-        .update({
-          status: 'ended',
-          winner_id: highestBid?.user_id || null
-        })
-        .eq('id', auctionId);
+      auctions[auctionIndex].status = 'ended';
+      auctions[auctionIndex].winnerId = highestBid?.userId || null;
+      await writeJSON('auctions.json', auctions);
 
-      if (error) {
-        return res.status(500).json({ error: 'Failed to end auction' });
-      }
-
-      return res.json({ success: true, winnerId: highestBid?.user_id });
+      return res.json({ success: true, winnerId: highestBid?.userId });
     }
 
     res.status(405).json({ error: 'Method not allowed' });

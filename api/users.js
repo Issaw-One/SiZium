@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+import { readJSON, writeJSON, generateId } from '../lib/storage.js';
 
 export const config = {
   runtime: "nodejs"
@@ -45,36 +40,32 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Invalid token' });
       }
 
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', payload.userId)
-        .single();
+      const users = await readJSON('users.json');
+      const user = users.find(u => u.id === payload.userId);
 
-      if (error || !user) {
+      if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
 
       // Get purchase history
-      const { data: purchases } = await supabase
-        .from('purchases')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
+      const purchases = await readJSON('purchases.json');
+      const userPurchases = purchases
+        .filter(p => p.userId === payload.userId)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 20);
 
       return res.json({
         user: {
           id: user.id,
           email: user.email,
-          discordId: user.discord_id,
+          discordId: user.discordId,
           role: user.role,
-          totalOrders: user.total_orders,
-          totalItems: user.total_items,
-          totalSpent: user.total_spent,
-          createdAt: user.created_at
+          totalOrders: user.totalOrders,
+          totalItems: user.totalItems,
+          totalSpent: user.totalSpent,
+          createdAt: user.createdAt
         },
-        purchases: purchases || []
+        purchases: userPurchases
       });
     }
 
@@ -91,18 +82,17 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid role' });
       }
 
-      const { data, error } = await supabase
-        .from('users')
-        .update({ role })
-        .eq('id', userId)
-        .select()
-        .single();
+      const users = await readJSON('users.json');
+      const userIndex = users.findIndex(u => u.id === userId);
 
-      if (error) {
-        return res.status(500).json({ error: 'Failed to update role' });
+      if (userIndex === -1) {
+        return res.status(404).json({ error: 'User not found' });
       }
 
-      return res.json({ success: true, user: data });
+      users[userIndex].role = role;
+      await writeJSON('users.json', users);
+
+      return res.json({ success: true, user: users[userIndex] });
     }
 
     // Record purchase
@@ -114,35 +104,29 @@ export default async function handler(req, res) {
       }
 
       // Create purchase record
-      const { data: purchase, error: purchaseError } = await supabase
-        .from('purchases')
-        .insert({
-          user_id: userId,
-          server,
-          items,
-          total
-        })
-        .select()
-        .single();
+      const purchase = {
+        id: generateId(),
+        userId,
+        server,
+        items,
+        total,
+        createdAt: new Date().toISOString()
+      };
 
-      if (purchaseError) {
-        return res.status(500).json({ error: 'Failed to record purchase' });
-      }
+      const purchases = await readJSON('purchases.json');
+      purchases.push(purchase);
+      await writeJSON('purchases.json', purchases);
 
       // Update user stats
-      const totalItems = items.reduce((sum, item) => sum + (item.qty || 1), 0);
+      const users = await readJSON('users.json');
+      const userIndex = users.findIndex(u => u.id === userId);
 
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          total_orders: supabase.raw('total_orders + 1'),
-          total_items: supabase.raw(`total_items + ${totalItems}`),
-          total_spent: supabase.raw(`total_spent + ${total}`)
-        })
-        .eq('id', userId);
-
-      if (updateError) {
-        console.error('Failed to update user stats:', updateError);
+      if (userIndex !== -1) {
+        const totalItems = items.reduce((sum, item) => sum + (item.qty || 1), 0);
+        users[userIndex].totalOrders = (users[userIndex].totalOrders || 0) + 1;
+        users[userIndex].totalItems = (users[userIndex].totalItems || 0) + totalItems;
+        users[userIndex].totalSpent = (users[userIndex].totalSpent || 0) + total;
+        await writeJSON('users.json', users);
       }
 
       return res.json({ success: true, purchase });
@@ -162,13 +146,10 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Invalid token' });
       }
 
-      const { data: user } = await supabase
-        .from('users')
-        .select('discord_id, role')
-        .eq('id', payload.userId)
-        .single();
+      const users = await readJSON('users.json');
+      const user = users.find(u => u.id === payload.userId);
 
-      if (!user || !user.discord_id) {
+      if (!user || !user.discordId) {
         return res.json({ hasCountryAccess: false, reason: 'no_discord_linked' });
       }
 
@@ -179,7 +160,7 @@ export default async function handler(req, res) {
       return res.json({
         hasCountryAccess,
         role: user.role,
-        discordId: user.discord_id
+        discordId: user.discordId
       });
     }
 
