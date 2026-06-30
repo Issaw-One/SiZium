@@ -85,12 +85,10 @@ body{margin:0;font-family:"Space Grotesk",system-ui,-apple-system,Segoe UI,Robot
 .label{font-size:.92rem;color:var(--muted);margin-bottom:8px}
 .input{width:100%;padding:11px 12px;border-radius:14px;background:rgba(7,10,18,.55);border:1px solid rgba(255,255,255,.14);color:var(--text);outline:none;font-family:inherit;transition:border-color .2s,box-shadow .2s}
 .input:focus{border-color:rgba(53,242,255,.4);box-shadow:0 0 0 3px rgba(53,242,255,.08)}
-.chips{display:flex;flex-direction:column;gap:8px}
-.cat-btn{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);border-radius:12px;color:rgba(234,240,255,.82);cursor:pointer;user-select:none;font-size:1rem;font-weight:600;transition:background .15s,border-color .15s,transform .12s}
-.cat-btn:hover{background:rgba(255,255,255,.1);transform:translateX(4px)}
-.cat-btn.active{border-color:rgba(53,242,255,.45);background:linear-gradient(135deg,rgba(53,242,255,.15),rgba(167,139,250,.15));color:var(--text);box-shadow:0 0 0 1px rgba(53,242,255,.2)}
-.cat-btn-icon{font-size:1.4rem;line-height:1}
-.cat-btn-text{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);padding:8px 10px;border-radius:999px;color:rgba(234,240,255,.82);cursor:pointer;user-select:none;font-size:.92rem;transition:background .15s,border-color .15s,transform .12s}
+.chip:hover{background:rgba(255,255,255,.1);transform:scale(1.04)}
+.chip.active{border-color:rgba(53,242,255,.35);background:rgba(53,242,255,.10);color:var(--text)}
 .rangeRow{display:flex;justify-content:space-between;align-items:center;gap:10px}
 input[type="range"]{width:100%;accent-color:var(--cyan);cursor:pointer}
 .small{font-size:.9rem;color:var(--muted)}
@@ -157,10 +155,6 @@ input[type="range"]{width:100%;accent-color:var(--cyan);cursor:pointer}
 .add:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(53,242,255,.15);filter:brightness(1.1)}
 .add:active{transform:scale(.97)}
 .add.added{animation:addedFlash .35s ease}
-
-/* DC COUNT BADGE */
-.dcCountBadge{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:10px;background:rgba(53,242,255,.08);border:1px solid rgba(53,242,255,.2);font-size:.85rem;color:rgba(234,240,255,.9);margin-bottom:8px}
-.dcCountValue{font-weight:900;color:var(--cyan);font-size:.95rem}
 
 .empty{padding:30px 16px;text-align:center;color:rgba(234,240,255,.72)}
 
