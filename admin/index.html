@@ -731,7 +731,7 @@
     async function saveData() {
       showToast("Enregistrement...");
       try {
-        const res = await fetch(`/api/supabase?server=${currentServerId}`,{
+        const res = await fetch(`/api/jsonbin?server=${currentServerId}`,{
           method:"PUT",
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify({items})
